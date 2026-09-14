@@ -1,0 +1,2809 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎥 Бензо — Кликер</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background: radial-gradient(circle at top,#1e293b,#0a0f1a);
+    color: #fff; padding: 16px;
+    display: flex; justify-content: center;
+  }
+  .app {
+    width: min(1280px, 100%);
+    display: flex; flex-direction: column; gap: 14px;
+  }
+
+  /* ============ ВЕРХНЯЯ ПАНЕЛЬ ============ */
+  .top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; flex-wrap: wrap;
+    background: #0d1422;
+    border: 3px solid #334155;
+    border-radius: 20px;
+    padding: 12px 18px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-logo {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg,#ef3340,#f0b429);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 6px 16px rgba(239,51,64,.5);
+  }
+  .brand-text h1 { margin: 0; font-size: 22px; letter-spacing: 1px; }
+  .brand-text p { margin: 2px 0 0; font-size: 12px; color: #94a3b8; }
+  .top-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip {
+    background: #172033;
+    border: 2px solid #334155;
+    border-radius: 14px;
+    padding: 8px 14px;
+    display: flex; align-items: center; gap: 8px;
+    font-weight: 800; font-size: 15px;
+    white-space: nowrap;
+  }
+  .chip small {
+    display: block; color: #94a3b8;
+    font-size: 11px; font-weight: 600; letter-spacing: .5px;
+  }
+  .chip b { font-size: 18px; color: #22c55e; }
+  .chip.money b { color: #f0b429; }
+  .chip.bp b { color: #a855f7; }
+
+  .admin-badge {
+    background: #ef3340; color: #fff;
+    font-weight: 900; padding: 8px 16px;
+    border-radius: 999px; font-size: 12px;
+    letter-spacing: 2px; cursor: pointer;
+    border: 3px solid #0d1422;
+    box-shadow: 0 6px 16px rgba(239,51,64,.5);
+    display: none;
+  }
+  .admin-badge.show { display: inline-block; }
+
+  /* ============ СТРИМ-ЗОНА ============ */
+  .stream-zone {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 14px;
+    background: linear-gradient(160deg,#0d1422,#1e1b4b);
+    border: 3px solid #40506a;
+    border-radius: 24px;
+    padding: 16px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.55);
+    position: relative;
+    overflow: hidden;
+    min-height: 520px;
+  }
+  .stream-zone::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(239,51,64,.18), transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(168,85,247,.18), transparent 45%);
+    pointer-events: none;
+  }
+  .stream-cam {
+    background: #000;
+    border-radius: 20px;
+    border: 3px solid #ef3340;
+    overflow: hidden;
+    position: relative;
+    display: flex; flex-direction: column;
+    box-shadow: 0 0 0 3px rgba(239,51,64,.2), 0 20px 50px rgba(0,0,0,.6);
+    min-height: 480px;
+  }
+  .cam-header {
+    background: linear-gradient(180deg,rgba(0,0,0,.9),transparent);
+    padding: 8px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: absolute; top: 0; left: 0; right: 0;
+    z-index: 3;
+  }
+  .live-badge {
+    background: #ef3340; color: #fff;
+    font-weight: 900; font-size: 12px;
+    padding: 4px 10px; border-radius: 8px;
+    display: flex; align-items: center; gap: 6px;
+    animation: pulseLive 1.4s infinite;
+  }
+  .live-badge::before {
+    content: ""; width: 8px; height: 8px;
+    border-radius: 50%; background: #fff;
+  }
+  @keyframes pulseLive {
+    0%,100% { opacity: 1; }
+    50% { opacity: .6; }
+  }
+  .viewers {
+    background: rgba(0,0,0,.6);
+    padding: 4px 10px; border-radius: 8px;
+    font-size: 12px; font-weight: 800; color: #fff;
+  }
+  .cam-body {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    background:
+      radial-gradient(circle at 50% 40%, rgba(239,51,64,.35), transparent 65%),
+      linear-gradient(180deg,#1a1220,#050810);
+    padding: 50px 20px;
+    overflow: hidden;
+  }
+  .cam-body::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 2px, transparent 2px 4px);
+    pointer-events: none;
+  }
+  .cam-body img {
+    max-width: 100%; max-height: 100%;
+    object-fit: contain;
+    border-radius: 14px;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,.8)) drop-shadow(0 0 30px rgba(239,51,64,.4));
+    z-index: 2;
+    animation: benzoIdle 3s ease-in-out infinite;
+  }
+  @keyframes benzoIdle {
+    0%,100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-6px) scale(1.02); }
+  }
+  .cam-footer {
+    background: linear-gradient(0deg,rgba(0,0,0,.9),transparent);
+    padding: 10px 12px;
+    position: absolute; bottom: 0; left: 0; right: 0;
+    z-index: 3;
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: #cbd5e1; font-weight: 700;
+  }
+
+  .stream-right {
+    display: flex; flex-direction: column; gap: 12px;
+    position: relative; z-index: 1;
+    min-height: 0;
+  }
+  .stream-title {
+    text-align: center; font-size: 34px; font-weight: 900;
+    letter-spacing: 4px;
+    background: linear-gradient(90deg,#ef3340,#f0b429,#22c55e);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+    text-shadow: 0 0 40px rgba(239,51,64,.3);
+  }
+  .stream-subtitle {
+    text-align: center; color: #94a3b8;
+    font-size: 13px; margin: -6px 0 0;
+    letter-spacing: 2px; font-weight: 700;
+  }
+
+  .chat-box {
+    flex: 1;
+    background: #0a0f1a;
+    border: 2px solid #334155;
+    border-radius: 16px;
+    padding: 12px;
+    overflow-y: auto;
+    min-height: 280px;
+    max-height: 420px;
+    display: flex; flex-direction: column;
+    gap: 8px; font-size: 14px;
+    scroll-behavior: smooth;
+  }
+  .chat-box::-webkit-scrollbar { width: 6px; }
+  .chat-box::-webkit-scrollbar-thumb { background: #334155; border-radius: 99px; }
+  .chat-msg {
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: #172033;
+    border-left: 4px solid #334155;
+    animation: msgIn .3s ease-out;
+    line-height: 1.4;
+    word-wrap: break-word;
+    max-width: 95%;
+  }
+  .chat-msg .nick { font-weight: 900; margin-right: 8px; font-size: 13px; }
+  .chat-msg .text { color: #dbeafe; }
+  .chat-msg.system {
+    background: linear-gradient(90deg,#2a1b4d,#172033);
+    border-left-color: #a855f7;
+    color: #e9d5ff;
+    font-weight: 700;
+    text-align: center; font-size: 13px;
+  }
+  .chat-msg.benzo {
+    background: linear-gradient(90deg,#3d1a1e,#172033);
+    border-left-color: #ef3340;
+    color: #fecaca;
+    font-weight: 700;
+    align-self: flex-start;
+    box-shadow: 0 4px 16px rgba(239,51,64,.25);
+    max-width: 90%;
+  }
+  .chat-msg.benzo .nick { color: #ef3340; font-size: 14px; }
+  .chat-msg.benzo .text { color: #fee2e2; }
+  @keyframes msgIn {
+    from { transform: translateX(-12px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  /* ============ МЕНЮ ============ */
+  .menu-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .menu-btn {
+    position: relative;
+    background: linear-gradient(160deg,#202c40,#0d1422);
+    border: 3px solid #334155;
+    border-radius: 18px;
+    padding: 16px 18px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer;
+    transition: transform .15s, border-color .15s, box-shadow .15s;
+    font-family: inherit; color: #fff;
+    text-align: left;
+    box-shadow: 0 6px 0 rgba(0,0,0,.4);
+    overflow: hidden;
+  }
+  .menu-btn::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle at 100% 0%, rgba(255,255,255,.08), transparent 50%);
+    pointer-events: none;
+  }
+  .menu-btn:hover { transform: translateY(-3px); border-color: #475569; }
+  .menu-btn:active { transform: translateY(1px); box-shadow: 0 2px 0 rgba(0,0,0,.4); }
+  .menu-btn .icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; flex-shrink: 0;
+    background: #172033;
+    border: 2px solid #40506a;
+    box-shadow: inset 0 0 20px rgba(0,0,0,.5);
+  }
+  .menu-btn .label { flex: 1; display: flex; flex-direction: column; }
+  .menu-btn .label b { font-size: 16px; letter-spacing: .5px; margin-bottom: 2px; }
+  .menu-btn .label span { font-size: 11px; color: #94a3b8; font-weight: 600; }
+
+  #subscribeBtn { background: linear-gradient(160deg,#3d1014,#0d1422); border-color: #ef3340; box-shadow: 0 6px 0 #7f1d1d; }
+  #subscribeBtn .icon { background: linear-gradient(135deg,#ef3340,#a91e28); border-color: #ef3340; }
+  #subscribeBtn .label b { color: #fecaca; }
+
+  #minigamesBtn { background: linear-gradient(160deg,#3d2f0a,#0d1422); border-color: #f0b429; box-shadow: 0 6px 0 #7f4a0a; }
+  #minigamesBtn .icon { background: linear-gradient(135deg,#f0b429,#a97c14); border-color: #f0b429; color: #1b2433; }
+  #minigamesBtn .label b { color: #fde68a; }
+
+  #promoBtn { background: linear-gradient(160deg,#1e1b4b,#0d1422); border-color: #6366f1; box-shadow: 0 6px 0 #3730a3; }
+  #promoBtn .icon { background: linear-gradient(135deg,#6366f1,#3730a3); border-color: #6366f1; }
+  #promoBtn .label b { color: #c7d2fe; }
+
+  #bpBtn { background: linear-gradient(160deg,#3d1a4d,#0d1422); border-color: #a855f7; box-shadow: 0 6px 0 #4c1d95; }
+  #bpBtn .icon { background: linear-gradient(135deg,#a855f7,#4c1d95); border-color: #a855f7; }
+  #bpBtn .label b { color: #e9d5ff; }
+
+  #lbBtn { background: linear-gradient(160deg,#0d3a2a,#0d1422); border-color: #22c55e; box-shadow: 0 6px 0 #166534; }
+  #lbBtn .icon { background: linear-gradient(135deg,#22c55e,#166534); border-color: #22c55e; color: #06281a; }
+  #lbBtn .label b { color: #bbf7d0; }
+
+  #skinsBtn { background: linear-gradient(160deg,#3d2a0a,#0d1422); border-color: #f59e0b; box-shadow: 0 6px 0 #78350f; }
+  #skinsBtn .icon { background: linear-gradient(135deg,#f59e0b,#78350f); border-color: #f59e0b; }
+  #skinsBtn .label b { color: #fde68a; }
+
+  #whoAdminBtn {
+    background: linear-gradient(160deg,#1a1f3d,#0d1422);
+    border-color: #6366f1; box-shadow: 0 6px 0 #312e81;
+  }
+  #whoAdminBtn .icon { background: linear-gradient(135deg,#6366f1,#4f46e5); border-color: #6366f1; }
+  #whoAdminBtn .label b { color: #c7d2fe; }
+
+  #resetBtn { background: linear-gradient(160deg,#1e293b,#0d1422); border-color: #475569; box-shadow: 0 6px 0 #1e293b; }
+  #resetBtn .icon { background: #334155; border-color: #475569; }
+  #resetBtn .label b { color: #cbd5e1; }
+
+  .benzo-say {
+    background: linear-gradient(90deg,#3d1a1e,#172033);
+    border: 3px solid #ef3340;
+    border-radius: 16px;
+    padding: 12px 18px;
+    display: flex; align-items: center; gap: 12px;
+    font-weight: 700; color: #fecaca; font-size: 15px;
+    box-shadow: 0 8px 0 #7f1d1d;
+  }
+  .benzo-say .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%; background: #ef3340;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+    border: 2px solid #0d1422;
+  }
+  .benzo-say .txt { flex: 1; line-height: 1.3; }
+
+  /* ============ ОКНА ============ */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(5,10,20,.88);
+    display: none; align-items: center; justify-content: center;
+    padding: 16px; z-index: 50;
+    backdrop-filter: blur(6px);
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    width: min(720px, 100%);
+    background: #172033;
+    border: 3px solid #40506a;
+    border-radius: 20px; padding: 22px;
+    text-align: center;
+    max-height: 92vh; overflow-y: auto;
+  }
+  .modal h2 { margin: 0 0 6px; }
+  .modal p { color: #b8c4d8; margin: 0 0 14px; }
+
+  .field {
+    position: relative; height: 300px;
+    background: #0d1422;
+    border: 2px dashed #475569;
+    border-radius: 16px;
+    overflow: hidden; cursor: crosshair;
+  }
+  .coin {
+    position: absolute; width: 62px; height: 62px;
+    font-size: 40px; line-height: 62px;
+    border-radius: 50%; background: #f0b429;
+    cursor: pointer; user-select: none;
+    animation: pop .15s ease-out;
+  }
+  @keyframes pop { from { transform: scale(.4); } to { transform: scale(1); } }
+  .hud { display: flex; justify-content: space-between; margin: 12px 0; font-weight: 700; }
+
+  .minigames-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px; margin-top: 14px; text-align: left;
+  }
+  .mg-card {
+    background: #202c40;
+    border: 3px solid #334155;
+    border-radius: 16px; padding: 16px;
+    transition: transform .15s, border-color .15s;
+  }
+  .mg-card:hover { transform: translateY(-3px); }
+  .mg-card.unlocked { border-color: #22c55e; }
+  .mg-card.locked { opacity: .75; }
+  .mg-icon { font-size: 44px; text-align: center; }
+  .mg-title { font-weight: 800; font-size: 17px; margin: 6px 0 4px; text-align: center; }
+  .mg-desc { font-size: 13px; color: #b8c4d8; margin-bottom: 10px; text-align: center; min-height: 54px; }
+  .mg-cost { text-align: center; color: #f0b429; font-weight: 800; font-size: 13px; margin-bottom: 10px; }
+  .mg-card button {
+    width: 100%; padding: 10px; font-size: 14px;
+    border-radius: 10px; background: #22c55e; color: #06281a;
+    box-shadow: none;
+  }
+  .mg-card.locked button { background: #4b5563; color: #cbd5e1; cursor: not-allowed; }
+
+  .run-field {
+    position: relative; width: 100%; height: 380px;
+    background: linear-gradient(180deg,#0f172a,#1e293b);
+    border: 2px solid #475569;
+    border-radius: 16px; overflow: hidden; margin-top: 10px;
+  }
+  .run-player, .run-enemy {
+    position: absolute; width: 60px; height: 60px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 42px; user-select: none;
+    transition: opacity .3s;
+  }
+  .run-player { z-index: 2; }
+  .run-enemy { z-index: 1; filter: drop-shadow(0 0 8px rgba(239,51,64,.9)); }
+  .run-enemy.hidden { opacity: 0; pointer-events: none; }
+  .run-enemy.spawning { animation: enemySpawn .8s ease-out; }
+  @keyframes enemySpawn {
+    0%   { transform: scale(0.3); opacity: 0; }
+    50%  { transform: scale(1.4); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .run-countdown {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    background: rgba(5,10,20,.55);
+    z-index: 5; font-weight: 900; pointer-events: none;
+  }
+  .run-countdown.hidden { display: none; }
+  .run-countdown .cd-num {
+    font-size: 140px; color: #f0b429;
+    text-shadow: 0 8px 0 rgba(0,0,0,.5), 0 0 60px rgba(240,180,41,.7);
+    line-height: 1;
+  }
+  .run-countdown .cd-text {
+    color: #dbeafe; font-size: 18px;
+    margin-top: 14px; font-weight: 800; letter-spacing: 2px;
+  }
+  .run-controls {
+    display: grid; grid-template-columns: repeat(3, 70px);
+    gap: 6px; justify-content: center; margin-top: 12px;
+  }
+  .run-controls button {
+    width: 70px; height: 60px;
+    font-size: 26px; background: #334155;
+    color: #fff; box-shadow: none;
+    border-radius: 12px; padding: 0;
+  }
+  .run-controls .empty { visibility: hidden; }
+
+  .slot-wrap {
+    display: flex; justify-content: center;
+    gap: 12px; margin: 18px 0; flex-wrap: wrap;
+  }
+  .slot {
+    width: 100px; height: 120px;
+    background: #0d1422;
+    border: 4px solid #f0b429;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 60px; transition: transform .15s;
+  }
+  .slot.spinning { animation: shake .15s infinite; }
+  @keyframes shake {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+    100% { transform: translateY(0); }
+  }
+  .slot.win { animation: winpop .5s ease-out; }
+  @keyframes winpop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); box-shadow: 0 0 30px #22c55e; }
+    100% { transform: scale(1); }
+  }
+  .slot.lose { animation: losepop .5s ease-out; }
+  @keyframes losepop {
+    0% { transform: scale(1); }
+    50% { transform: scale(.85); box-shadow: 0 0 30px #ef3340; }
+    100% { transform: scale(1); }
+  }
+  .bet-row {
+    display: flex; gap: 8px; align-items: center;
+    flex-wrap: wrap; justify-content: center; margin-bottom: 12px;
+  }
+  .bet-row label { color: #cbd5e1; font-weight: 800; }
+  .bet-row input {
+    padding: 12px; border-radius: 10px;
+    border: 2px solid #40506a;
+    background: #0d1422; color: #fff;
+    font-size: 16px; width: 140px;
+    text-align: center; outline: none; font-family: inherit;
+  }
+  .spin-btn {
+    background: #ef3340; color: #fff;
+    padding: 14px 30px; font-size: 18px;
+    border-radius: 14px; box-shadow: 0 6px 0 #a91e28;
+  }
+  .spin-result {
+    font-size: 18px; font-weight: 800;
+    min-height: 26px; text-align: center; margin-top: 8px;
+  }
+  .spin-rules {
+    background: #0d1422; border-radius: 12px;
+    padding: 12px; font-size: 13px;
+    color: #cbd5e1; margin-top: 14px; text-align: left;
+  }
+  .spin-rules b { color: #f0b429; }
+
+  .skin-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px; margin-top: 12px;
+  }
+  .skin-card {
+    background: #202c40;
+    border: 3px solid #334155;
+    border-radius: 16px; padding: 12px;
+    text-align: center;
+    transition: transform .15s, border-color .15s;
+  }
+  .skin-card:hover { transform: translateY(-3px); }
+  .skin-card.active { border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.25); }
+  .skin-avatar {
+    width: 90px; height: 90px;
+    margin: 0 auto 8px;
+    border-radius: 14px; background: #0d1422;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 54px; overflow: hidden;
+    border: 2px solid #40506a;
+  }
+  .skin-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .skin-name { font-weight: 800; font-size: 15px; margin-bottom: 2px; }
+  .skin-mult {
+    display: inline-block; background: #22c55e;
+    color: #06281a; font-weight: 900;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 12px; margin-bottom: 6px;
+  }
+  .skin-price { font-size: 13px; color: #f0b429; font-weight: 800; margin-bottom: 8px; }
+  .skin-card button {
+    width: 100%; padding: 8px 6px;
+    font-size: 13px; border-radius: 10px;
+    background: #6366f1; color: #fff;
+    box-shadow: none;
+  }
+  .skin-card button.owned { background: #22c55e; color: #06281a; }
+  .skin-card button.active-btn { background: #334155; color: #cbd5e1; cursor: default; }
+  .skin-card button:disabled { opacity: .8; cursor: not-allowed; transform: none; }
+
+  .bonus-modal {
+    width: min(520px, 100%);
+    background: linear-gradient(160deg,#172033,#2a1b4d);
+    border: 4px solid #a855f7;
+    border-radius: 24px; padding: 28px 22px;
+    text-align: center; box-shadow: 0 0 60px rgba(168,85,247,.55);
+  }
+  .bonus-modal h2 { font-size: 26px; margin: 0 0 6px; color: #f0b429; letter-spacing: 1px; }
+  .bonus-modal .big { font-size: 60px; font-weight: 900; color: #22c55e; margin: 14px 0; text-shadow: 0 6px 0 rgba(0,0,0,.35); }
+  .bonus-modal .sub { color: #cbd5e1; }
+  .bonus-modal .ok {
+    margin-top: 18px; background: #22c55e; color: #06281a;
+    padding: 14px 28px; font-size: 18px;
+    border-radius: 14px; box-shadow: 0 6px 0 #166534;
+  }
+
+  .promo-modal { width: min(460px, 100%); }
+  .promo-input {
+    width: 100%; padding: 14px;
+    border-radius: 12px;
+    border: 2px solid #40506a;
+    background: #0d1422; color: #fff;
+    font-size: 18px; text-align: center;
+    letter-spacing: 3px; font-weight: 800;
+    outline: none; text-transform: uppercase;
+  }
+  .promo-input:focus { border-color: #6366f1; }
+  .promo-actions { display: flex; gap: 10px; margin-top: 12px; }
+  .promo-actions button { flex: 1; padding: 12px; font-size: 16px; box-shadow: none; }
+  .promo-go { background: #6366f1; color: #fff; }
+  .promo-cancel { background: #334155; color: #fff; }
+  .promo-status { margin-top: 14px; min-height: 24px; color: #f0b429; font-weight: 700; }
+
+  .bp-modal {
+    width: min(880px, 100%);
+    background: linear-gradient(160deg,#172033,#1e1b4b);
+    border: 4px solid #f0b429;
+    border-radius: 20px; padding: 22px;
+    max-height: 92vh; overflow-y: auto;
+  }
+  .bp-modal h2 {
+    margin: 0 0 6px; color: #f0b429;
+    text-align: center; font-size: 28px; letter-spacing: 2px;
+  }
+  .bp-modal .bp-sub { text-align: center; color: #cbd5e1; margin-bottom: 16px; }
+  .bp-current {
+    background: #0d1422;
+    border: 2px solid #f0b429;
+    border-radius: 16px; padding: 16px;
+    text-align: center; margin-bottom: 16px;
+  }
+  .bp-current .bp-lvl {
+    font-size: 44px; font-weight: 900;
+    color: #f0b429; text-shadow: 0 4px 0 rgba(0,0,0,.4);
+  }
+  .bp-current .bp-lvl-sub { color: #cbd5e1; font-size: 14px; margin-top: 4px; }
+  .bp-progress {
+    height: 22px; background: #0f172a;
+    border-radius: 99px; overflow: hidden;
+    border: 1px solid #475569;
+    margin: 12px 0 6px;
+  }
+  .bp-progress-bar {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg,#f0b429,#ef3340);
+    transition: width .3s;
+  }
+  .bp-progress-text { color: #cbd5e1; font-size: 13px; }
+  .bp-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px; margin-top: 14px;
+  }
+  .bp-tier {
+    background: #202c40;
+    border: 3px solid #334155;
+    border-radius: 14px; padding: 12px;
+    text-align: center;
+    transition: transform .15s, border-color .15s, box-shadow .15s;
+  }
+  .bp-tier.unlocked { border-color: #22c55e; background: #1a3a2a; }
+  .bp-tier.current {
+    border-color: #f0b429;
+    box-shadow: 0 0 0 3px rgba(240,180,41,.4);
+  }
+  .bp-tier.secret {
+    border-color: #a855f7;
+    background: linear-gradient(160deg,#2a1b4d,#0d1422);
+  }
+  .bp-tier.secret.unlocked {
+    background: linear-gradient(160deg,#4c1d95,#1a3a2a);
+    border-color: #22c55e;
+  }
+  .bp-tier.mega {
+    border-color: #f0b429;
+    background: linear-gradient(160deg,#4a2f0a,#0d1422);
+  }
+  .bp-tier.mega.unlocked {
+    background: linear-gradient(160deg,#a16207,#1a3a2a);
+    border-color: #22c55e;
+  }
+  .bp-tier.giga {
+    border-color: #ef3340;
+    background: linear-gradient(160deg,#4a0a14,#0d1422);
+  }
+  .bp-tier.giga.unlocked {
+    background: linear-gradient(160deg,#991b1b,#1a3a2a);
+    border-color: #22c55e;
+  }
+  .bp-tier-num {
+    display: inline-block; background: #f0b429;
+    color: #1b2433; font-weight: 900;
+    padding: 2px 10px; border-radius: 999px;
+    font-size: 12px; margin-bottom: 6px;
+  }
+  .bp-tier.secret .bp-tier-num { background: #a855f7; color: #fff; }
+  .bp-tier.mega .bp-tier-num { background: #f0b429; color: #1b2433; }
+  .bp-tier.giga .bp-tier-num { background: #ef3340; color: #fff; }
+  .bp-tier-icon { font-size: 40px; margin: 4px 0; display: block; }
+  .bp-tier-name {
+    font-weight: 800; font-size: 13px; margin-bottom: 4px;
+    min-height: 32px; display: flex; align-items: center; justify-content: center;
+  }
+  .bp-tier-subs { color: #94a3b8; font-size: 11px; margin-bottom: 8px; }
+  .bp-tier button {
+    width: 100%; padding: 8px 6px;
+    font-size: 12px; border-radius: 10px;
+    background: #22c55e; color: #06281a;
+    box-shadow: none; font-weight: 900;
+  }
+  .bp-tier button.locked-btn { background: #4b5563; color: #cbd5e1; cursor: not-allowed; }
+  .bp-tier button.claimed-btn { background: #334155; color: #94a3b8; cursor: default; }
+
+  .lb-modal {
+    width: min(680px, 100%);
+    background: linear-gradient(160deg,#172033,#0d2a1f);
+    border: 4px solid #22c55e;
+    border-radius: 20px; padding: 22px;
+    max-height: 92vh; overflow-y: auto;
+    box-shadow: 0 0 60px rgba(34,197,94,.4);
+  }
+  .lb-modal h2 {
+    margin: 0 0 6px; color: #22c55e;
+    text-align: center; font-size: 28px; letter-spacing: 2px;
+  }
+  .lb-modal .lb-sub { text-align: center; color: #cbd5e1; margin-bottom: 12px; font-size: 14px; }
+  .lb-tabs {
+    display: flex; gap: 8px; margin-bottom: 16px;
+    background: #0d1422; padding: 6px; border-radius: 14px;
+  }
+  .lb-tab {
+    flex: 1; padding: 12px; border-radius: 10px;
+    background: transparent; color: #cbd5e1;
+    font-weight: 800; font-size: 14px;
+    border: 0; cursor: pointer; font-family: inherit;
+    box-shadow: none;
+  }
+  .lb-tab.active { background: #22c55e; color: #06281a; }
+  .lb-list { display: flex; flex-direction: column; gap: 8px; }
+  .lb-row {
+    display: flex; align-items: center; gap: 12px;
+    background: #0d1422;
+    border: 2px solid #334155;
+    border-radius: 14px; padding: 12px 16px;
+  }
+  .lb-row.me { border-color: #22c55e; background: #1a3a2a; }
+  .lb-row.top1 { border-color: #f0b429; }
+  .lb-row.top2 { border-color: #cbd5e1; }
+  .lb-row.top3 { border-color: #b45309; }
+  .lb-rank { font-size: 22px; font-weight: 900; min-width: 40px; text-align: center; }
+  .lb-avatar {
+    width: 46px; height: 46px;
+    border-radius: 50%; background: #172033;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; border: 2px solid #40506a;
+    overflow: hidden; flex-shrink: 0;
+  }
+  .lb-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .lb-info { flex: 1; min-width: 0; }
+  .lb-name { font-weight: 800; font-size: 15px; color: #fff; }
+  .lb-name .you {
+    color: #22c55e; font-size: 11px; font-weight: 900;
+    background: rgba(34,197,94,.2); padding: 2px 8px;
+    border-radius: 999px; margin-left: 6px;
+  }
+  .lb-skin { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .lb-value { font-weight: 900; font-size: 17px; color: #22c55e; text-align: right; }
+  .lb-value.money { color: #f0b429; }
+  .lb-hint {
+    text-align: center; color: #94a3b8;
+    font-size: 12px; margin-top: 14px;
+    padding: 10px; background: #0d1422; border-radius: 10px;
+  }
+
+  /* АДМИН ПАНЕЛЬ */
+  .admin-modal {
+    width: min(720px, 100%);
+    background: #0d1422;
+    border: 4px solid #ef3340;
+    border-radius: 20px; padding: 22px;
+    text-align: left;
+    max-height: 92vh; overflow-y: auto;
+  }
+  .admin-modal h2 {
+    margin: 0 0 4px; color: #ef3340;
+    font-size: 26px; letter-spacing: 2px; text-align: center;
+  }
+  .admin-modal .warn {
+    text-align: center; color: #f0b429;
+    font-size: 13px; margin-bottom: 18px;
+  }
+  .admin-section {
+    background: #172033;
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 14px; margin-bottom: 12px;
+  }
+  .admin-section h3 {
+    margin: 0 0 10px; font-size: 15px;
+    color: #22c55e; letter-spacing: 1px;
+  }
+  .admin-section.promo-gen { border: 2px solid #a855f7; }
+  .admin-section.promo-gen h3 { color: #a855f7; }
+  .admin-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .admin-row:last-child { margin-bottom: 0; }
+  .admin-row input, .admin-row select {
+    flex: 1; min-width: 100px;
+    padding: 10px; border-radius: 10px;
+    border: 2px solid #40506a;
+    background: #0d1422; color: #fff;
+    font-size: 14px; outline: none; font-family: inherit;
+  }
+  .admin-row button {
+    padding: 10px 16px; font-size: 14px;
+    border-radius: 10px; background: #ef3340;
+    color: #fff; box-shadow: none; flex: 0 0 auto;
+  }
+  .admin-row button.alt { background: #6366f1; }
+  .admin-row button.ok { background: #22c55e; color: #06281a; }
+  .admin-row button.purple { background: #a855f7; color: #fff; }
+  .admin-row button.wide { flex: 1; }
+  .admin-bg-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 8px; margin-top: 8px;
+  }
+  .admin-bg-grid button {
+    padding: 10px 6px; font-size: 12px;
+    border-radius: 10px; background: #334155;
+    color: #fff; box-shadow: none;
+  }
+  .admin-bg-grid button.active { background: #22c55e; color: #06281a; }
+  .event-options {
+    display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;
+  }
+  .event-options label {
+    background: #334155; padding: 8px 12px;
+    border-radius: 10px; cursor: pointer;
+    font-size: 13px; flex: 1; min-width: 90px;
+    text-align: center;
+    border: 2px solid transparent;
+  }
+  .event-options input { display: none; }
+  .event-options label:has(input:checked) {
+    background: #1e293b;
+    border-color: #22c55e; color: #22c55e;
+    font-weight: 800;
+  }
+  .admin-close {
+    width: 100%; margin-top: 8px;
+    background: #334155; color: #fff;
+    padding: 14px; font-size: 15px; box-shadow: none;
+  }
+  .admin-skins-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px; margin-top: 8px;
+  }
+  .admin-skin-item {
+    background: #0d1422;
+    border: 2px solid #334155;
+    border-radius: 12px; padding: 10px; text-align: center;
+  }
+  .admin-skin-item .as-icon { font-size: 32px; display: block; margin-bottom: 4px; }
+  .admin-skin-item .as-name { font-size: 12px; font-weight: 800; margin-bottom: 6px; min-height: 28px; }
+  .admin-skin-item .as-mult {
+    display: inline-block; background: #22c55e;
+    color: #06281a; padding: 2px 8px;
+    border-radius: 999px; font-size: 11px;
+    font-weight: 900; margin-bottom: 6px;
+  }
+  .admin-skin-item button {
+    width: 100%; padding: 6px; font-size: 11px;
+    border-radius: 8px; background: #a855f7;
+    color: #fff; box-shadow: none;
+  }
+  .admin-skin-item button.have {
+    background: #334155; color: #cbd5e1; cursor: default;
+  }
+  .admin-promos-list {
+    background: #0d1422;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 10px; margin-top: 8px;
+    max-height: 220px; overflow-y: auto;
+    font-size: 12px;
+  }
+  .admin-promo-item {
+    background: #172033;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 8px 10px; margin-bottom: 6px;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .admin-promo-item:last-child { margin-bottom: 0; }
+  .admin-promo-item .pi-info { flex: 1; }
+  .admin-promo-item .pi-code {
+    color: #f0b429; font-weight: 900;
+    font-size: 13px; letter-spacing: 1px;
+    margin-bottom: 3px;
+  }
+  .admin-promo-item .pi-desc { color: #cbd5e1; font-size: 11px; line-height: 1.4; }
+  .admin-promo-item .pi-uses { color: #22c55e; font-weight: 800; font-size: 11px; }
+  .admin-promo-item .pi-uses.zero { color: #ef3340; }
+  .admin-promo-item .pi-del {
+    background: #ef3340; color: #fff;
+    border: 0; border-radius: 8px;
+    padding: 6px 10px; font-size: 11px;
+    cursor: pointer; box-shadow: none;
+  }
+  .admin-promo-empty {
+    text-align: center; color: #64748b;
+    font-size: 12px; padding: 14px;
+  }
+
+  /* КТО АДМИН */
+  .who-modal {
+    width: min(560px, 100%);
+    background: linear-gradient(160deg,#0d1422,#1a1f3d);
+    border: 4px solid #6366f1;
+    border-radius: 20px; padding: 22px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(99,102,241,.4);
+  }
+  .who-modal h2 {
+    margin: 0 0 6px; color: #c7d2fe;
+    font-size: 26px; letter-spacing: 2px;
+  }
+  .who-modal .who-sub { color: #94a3b8; font-size: 13px; margin-bottom: 18px; }
+  .admin-list {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .admin-card {
+    background: #0d1422;
+    border: 2px solid #334155;
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    transition: transform .15s, border-color .15s;
+  }
+  .admin-card:hover { transform: translateY(-2px); border-color: #6366f1; }
+  .admin-card.founder { border-color: #f0b429; background: linear-gradient(160deg,#3d2a0a,#0d1422); }
+  .admin-card.helper { border-color: #a855f7; background: linear-gradient(160deg,#2a1b4d,#0d1422); }
+  .admin-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+    border: 2px solid #0d1422;
+  }
+  .admin-card.founder .admin-avatar { background: linear-gradient(135deg,#f0b429,#a16207); }
+  .admin-card.helper .admin-avatar { background: linear-gradient(135deg,#a855f7,#4c1d95); }
+  .admin-info { flex: 1; text-align: left; }
+  .admin-name {
+    font-weight: 900; font-size: 16px;
+    color: #fff; margin-bottom: 2px;
+  }
+  .admin-tag {
+    display: inline-block;
+    font-size: 11px; font-weight: 900;
+    padding: 2px 8px; border-radius: 999px;
+    margin-right: 6px;
+    letter-spacing: 1px;
+  }
+  .admin-card.founder .admin-tag { background: #f0b429; color: #1b2433; }
+  .admin-card.helper .admin-tag { background: #a855f7; color: #fff; }
+  .admin-tg {
+    color: #94a3b8;
+    font-size: 13px;
+    margin-top: 4px;
+    word-break: break-all;
+  }
+  .admin-tg b { color: #c7d2fe; font-weight: 900; }
+  .who-hint {
+    background: #172033;
+    border: 2px dashed #334155;
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+  .who-hint b { color: #a855f7; }
+
+  .global-banner {
+    position: fixed; top: 12px; left: 50%;
+    transform: translateX(-50%) translateY(-120%);
+    background: linear-gradient(135deg,#a855f7,#6366f1);
+    color: #fff; padding: 14px 26px;
+    border-radius: 16px; font-weight: 800;
+    font-size: 17px; z-index: 200;
+    box-shadow: 0 12px 30px rgba(168,85,247,.55);
+    border: 3px solid #0d1422;
+    transition: transform .35s cubic-bezier(.2,.9,.3,1.4);
+    max-width: 90vw; text-align: center;
+  }
+  .global-banner.show { transform: translateX(-50%) translateY(0); }
+  .global-banner .tag { color: #f0b429; margin-right: 6px; }
+
+  .event-banner {
+    background: linear-gradient(135deg,#ef3340,#a855f7);
+    color: #fff; padding: 12px 20px;
+    text-align: center; font-weight: 800;
+    font-size: 16px; display: none;
+    border-radius: 16px;
+    border: 3px solid #0d1422;
+    animation: pulse 2s infinite;
+  }
+  .event-banner.show { display: block; }
+  @keyframes pulse {
+    0%,100% { filter: brightness(1); }
+    50% { filter: brightness(1.25); }
+  }
+  .event-banner span { background: rgba(0,0,0,.3); padding: 2px 10px; border-radius: 8px; margin-left: 8px; }
+
+  @media (max-width: 900px) {
+    .stream-zone { grid-template-columns: 1fr; }
+    .stream-cam { min-height: 340px; }
+    .stream-title { font-size: 24px; letter-spacing: 2px; }
+    .chat-box { max-height: 300px; }
+  }
+  @media (max-width: 600px) {
+    .menu-grid { grid-template-columns: 1fr 1fr; }
+    .menu-btn { padding: 12px; gap: 10px; }
+    .menu-btn .icon { width: 42px; height: 42px; font-size: 22px; }
+    .menu-btn .label b { font-size: 13px; }
+    .menu-btn .label span { display: none; }
+    .brand-text h1 { font-size: 18px; }
+    .chip { padding: 6px 10px; font-size: 13px; }
+    .chip b { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="top-bar">
+    <div class="brand">
+      <div class="brand-logo">🎥</div>
+      <div class="brand-text">
+        <h1>БЕНЗО КЛИКЕР</h1>
+        <p>ОТ НУБА ДО ПРОФЕССИОНАЛА</p>
+      </div>
+    </div>
+    <div class="top-stats">
+      <div class="chip"><span>👥</span><div><small>ПОДПИСЧИКИ</small><b id="subs">0</b></div></div>
+      <div class="chip money"><span>💰</span><div><small>ДЕНЬГИ</small><b id="money">$0</b></div></div>
+      <div class="chip bp"><span>🎖️</span><div><small>БАТЛ ПАСС</small><b id="bpBadge">Ур. 1</b></div></div>
+      <div class="admin-badge" id="adminBadge">👑 ADMIN</div>
+    </div>
+  </div>
+
+  <div class="event-banner" id="eventBanner">
+    🌋 ИВЕНТ АКТИВЕН · <span id="eventInfo"></span> · <span id="eventTime">00:00</span>
+  </div>
+
+  <div class="stream-zone">
+    <div class="stream-cam">
+      <div class="cam-header">
+        <div class="live-badge">LIVE</div>
+        <div class="viewers" id="viewersCount">👁 1 234</div>
+      </div>
+      <div class="cam-body">
+        <img id="benzoImg" alt="Бензо в эфире">
+      </div>
+      <div class="cam-footer">
+        <span>🔴 Бензо в прямом эфире</span>
+        <span id="camStatus">● 00:00:00</span>
+      </div>
+    </div>
+
+    <div class="stream-right">
+      <h2 class="stream-title">БЕНЗО КЛИКЕР!</h2>
+      <div class="stream-subtitle">💬 ПРЯМОЙ ЭФИР · ЧАТ С БЕНЗО</div>
+      <div class="chat-box" id="chatBox"></div>
+    </div>
+  </div>
+
+  <div class="menu-grid">
+    <button class="menu-btn" id="subscribeBtn">
+      <div class="icon">🔔</div>
+      <div class="label"><b>ПОДПИСАТЬСЯ</b><span>+подписчики и деньги</span></div>
+    </button>
+    <button class="menu-btn" id="minigamesBtn">
+      <div class="icon">🎮</div>
+      <div class="label"><b>МИНИ-ИГРЫ</b><span>3 игры с наградами</span></div>
+    </button>
+    <button class="menu-btn" id="promoBtn">
+      <div class="icon">🎁</div>
+      <div class="label"><b>ПРОМОКОДЫ</b><span>вводи коды для бонусов</span></div>
+    </button>
+    <button class="menu-btn" id="bpBtn">
+      <div class="icon">🎖️</div>
+      <div class="label"><b>БАТЛ ПАСС</b><span>150 уровней с наградами</span></div>
+    </button>
+    <button class="menu-btn" id="skinsBtn">
+      <div class="icon">🎨</div>
+      <div class="label"><b>СКИНЫ</b><span>смена облика Бензо</span></div>
+    </button>
+    <button class="menu-btn" id="lbBtn">
+      <div class="icon">🏆</div>
+      <div class="label"><b>ДОСКА ЛИДЕРОВ</b><span>топ игроков</span></div>
+    </button>
+    <button class="menu-btn" id="whoAdminBtn">
+      <div class="icon">👑</div>
+      <div class="label"><b>КТО АДМИН</b><span>список админов игры</span></div>
+    </button>
+  </div>
+
+  <div class="benzo-say">
+    <div class="avatar">🎩</div>
+    <div class="txt" id="message">Бензо: «Привет, чат! Давай соберём первых 1 000 подписчиков!»</div>
+  </div>
+
+  <button class="menu-btn" id="resetBtn" style="min-height:56px;">
+    <div class="icon" style="background:#334155;">🗑️</div>
+    <div class="label"><b>СБРОСИТЬ ПРОГРЕСС</b><span>начать заново</span></div>
+  </button>
+
+</div>
+
+<div class="overlay" id="minigamesOverlay">
+  <div class="modal">
+    <h2>🎮 МЕНЮ МИНИ-ИГР</h2>
+    <p>Выбирай игру и получай награды!</p>
+    <div class="minigames-grid">
+      <div class="mg-card" id="mgCoin">
+        <div class="mg-icon">🪙</div>
+        <div class="mg-title">Поймай монету</div>
+        <div class="mg-desc">Собери 10 монет за 15 секунд. Награда: +1 300 подписчиков и +500 $.</div>
+        <div class="mg-cost" id="mgCoinCost">🔓 Откроется на 1 000 подписчиков</div>
+        <button id="mgCoinBtn">Играть</button>
+      </div>
+      <div class="mg-card" id="mgRun">
+        <div class="mg-icon">🏃‍♂️💨</div>
+        <div class="mg-title">Беги от фембоя</div>
+        <div class="mg-desc">5 секунд форы, потом фембой гонится 20 секунд! Награда: +5 000 подписчиков, +$15 000 и бафф ×4 на 5 минут.</div>
+        <div class="mg-cost" id="mgRunCost">🔓 Откроется на 10 000 подписчиков</div>
+        <button id="mgRunBtn">Играть</button>
+      </div>
+      <div class="mg-card unlocked" id="mgSpin">
+        <div class="mg-icon">🎰</div>
+        <div class="mg-title">Спин</div>
+        <div class="mg-desc">Ставка от $10. 3 одинаковых — ×10, 2 — ×5, без повторов — потеря 50%. Если не повезло — скажи «Точка помоги»!</div>
+        <div class="mg-cost">💰 Доступно всегда</div>
+        <button id="mgSpinBtn">Играть</button>
+      </div>
+    </div>
+    <button class="admin-close" id="closeMinigames" style="margin-top:16px;">Закрыть</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" style="width:min(520px,100%)">
+    <h2>🎮 Поймай монету</h2>
+    <p>Собери <b>10 монет</b> за <b>15 секунд</b>!</p>
+    <div class="hud"><span>🪙 Монеты: <span id="coinScore">0</span> / 10</span><span>⏱️ Время: <span id="coinTime">15</span> с</span></div>
+    <div class="field" id="field"></div>
+    <div id="miniResult" style="margin-top:12px; min-height:24px; color:#f0b429; font-weight:700;"></div>
+    <button class="admin-close" id="closeMini" style="margin-top:10px;">Закрыть</button>
+  </div>
+</div>
+
+<div class="overlay" id="runOverlay">
+  <div class="modal" style="width:min(560px,100%)">
+    <h2>🏃‍♂️💨 Беги от фембоя</h2>
+    <p>5 секунд форы, потом фембой начнёт погоню!</p>
+    <div class="hud"><span>⏱️ Время: <span id="runTime">20</span> с</span><span id="runEnemyStatus">👹 Фембой: готовится...</span></div>
+    <div class="run-field" id="runField">
+      <div class="run-player" id="runPlayer">🧑</div>
+      <div class="run-enemy hidden" id="runEnemy">👹</div>
+      <div class="run-countdown hidden" id="runCountdown">
+        <div class="cd-num" id="cdNum">5</div>
+        <div class="cd-text">ПОДГОТОВЬСЯ И БЕГИ!</div>
+      </div>
+    </div>
+    <div class="run-controls">
+      <div class="empty"></div><button data-dir="up">⬆️</button><div class="empty"></div>
+      <button data-dir="left">⬅️</button><button data-dir="down">⬇️</button><button data-dir="right">➡️</button>
+    </div>
+    <div id="runResult" style="margin-top:10px; min-height:24px; color:#f0b429; font-weight:700;"></div>
+    <div style="font-size:12px; color:#94a3b8; margin-top:6px">ПК: WASD · Телефон: кнопки на экране</div>
+    <button class="admin-close" id="closeRun" style="margin-top:10px;">Закрыть</button>
+  </div>
+</div>
+
+<div class="overlay" id="spinOverlay">
+  <div class="modal" style="width:min(540px,100%)">
+    <h2>🎰 Спин</h2>
+    <p>Сделай ставку и крути!</p>
+    <div class="slot-wrap">
+      <div class="slot" id="slot1">❓</div>
+      <div class="slot" id="slot2">❓</div>
+      <div class="slot" id="slot3">❓</div>
+    </div>
+    <div class="bet-row"><label>💰 Ставка: $</label><input type="number" id="spinBet" value="10" min="10"></div>
+    <button class="spin-btn" id="spinBtn">🎰 КРУТИТЬ</button>
+    <div class="spin-result" id="spinResult"></div>
+    <div id="spinTochkaBtn" style="display:none; margin-top:12px;">
+      <button id="tochkaHelpBtn" style="width:100%; padding:14px; font-size:16px; font-weight:900; background:linear-gradient(135deg,#6366f1,#a855f7); color:#fff; border:0; border-radius:14px; cursor:pointer; box-shadow:0 6px 0 #4c1d95; letter-spacing:1px;">
+        ⚫ СКАЗАТЬ: «ТОЧКА ПОМОГИ» (50% шанс вернуть ставку)
+      </button>
+    </div>
+    <div class="spin-rules">
+      <b>Правила:</b><br>🎯 3 одинаковых — выигрыш ×10<br>🎯 2 одинаковых — выигрыш ×5<br>❌ Без повторов — теряешь 50% ставки
+    </div>
+    <button class="admin-close" id="closeSpin" style="margin-top:12px;">Закрыть</button>
+  </div>
+</div>
+
+<div class="overlay" id="skinsOverlay">
+  <div class="modal">
+    <h2>🎨 Скины Бензо</h2>
+    <p>Покупай скины — они дают бонус к подписчикам за каждый клик!</p>
+    <div class="skin-grid" id="skinGrid"></div>
+    <button class="admin-close" id="closeSkins" style="margin-top:16px;">Закрыть</button>
+  </div>
+</div>
+
+<div class="overlay" id="bpOverlay">
+  <div class="bp-modal">
+    <h2>🎖️ БАТЛ ПАСС</h2>
+    <div class="bp-sub">Каждые <b>500 подписчиков</b> = +1 уровень · Всего <b>150 уровней</b></div>
+    <div class="bp-current">
+      <div class="bp-lvl" id="bpLevelBig">Ур. 1</div>
+      <div class="bp-lvl-sub" id="bpLevelDesc">До следующего уровня: 500 подписчиков</div>
+      <div class="bp-progress"><div class="bp-progress-bar" id="bpBar"></div></div>
+      <div class="bp-progress-text" id="bpProgressText">0 / 500</div>
+    </div>
+    <div class="bp-grid" id="bpGrid"></div>
+    <button class="admin-close" id="closeBP" style="margin-top:16px;">Закрыть</button>
+  </div>
+</div>
+
+<div class="overlay" id="leaderboardOverlay">
+  <div class="lb-modal">
+    <h2>🏆 ДОСКА ЛИДЕРОВ</h2>
+    <div class="lb-sub">Сравнивай себя с другими игроками!</div>
+    <div class="lb-tabs">
+      <button class="lb-tab active" id="lbTabSubs">👥 Больше всего подписчиков</button>
+      <button class="lb-tab" id="lbTabMoney">💰 Больше всего денег</button>
+    </div>
+    <div class="lb-list" id="lbList"></div>
+    <div class="lb-hint" id="lbHint">💡 Пригласи друзей в игру — они появятся на этой доске лидеров!</div>
+    <button class="admin-close" id="closeLB" style="margin-top:16px;">Закрыть</button>
+  </div>
+</div>
+
+<div class="overlay" id="whoAdminOverlay">
+  <div class="who-modal">
+    <h2>👑 КТО АДМИН</h2>
+    <div class="who-sub">Список администраторов игры Бензо Кликер</div>
+    <div class="admin-list" id="adminList"></div>
+    <div class="who-hint">
+      💡 Хочешь стать админом? Покажи себя активным в игре и напиши владельцу в Telegram: <b>@Bogan_Boban</b>
+    </div>
+    <button class="admin-close" id="closeWhoAdmin" style="margin-top:14px;">Закрыть</button>
+  </div>
+</div>
+
+<div class="overlay" id="bonusOverlay">
+  <div class="bonus-modal">
+    <h2>🎉 НОВЫЙ СКИН!</h2>
+    <div class="sub" id="bonusSkinName">Саня 49</div>
+    <div class="big" id="bonusMult">×3</div>
+    <h2 style="color:#22c55e" id="bonusTitle">ВЫ ПОЛУЧАЕТЕ ×3<br>К ПОДПИСЧИКАМ</h2>
+    <button class="ok" id="bonusOk">КРУТО!</button>
+  </div>
+</div>
+
+<div class="overlay" id="promoOverlay">
+  <div class="modal promo-modal">
+    <h2>🎁 Промокоды</h2>
+    <p>Введи промокод и получи бонус!</p>
+    <input class="promo-input" id="promoInput" placeholder="ВВЕДИ КОД" maxlength="30">
+    <div class="promo-actions">
+      <button class="promo-go" id="promoGo">Активировать</button>
+      <button class="promo-cancel" id="promoClose">Закрыть</button>
+    </div>
+    <div class="promo-status" id="promoStatus">⏳ Введи промокод и получи бонус!</div>
+  </div>
+</div>
+
+<div class="overlay" id="adminOverlay">
+  <div class="admin-modal">
+    <h2>👑 ADMIN PANEL</h2>
+    <div class="warn">🔒 СУПЕР СЕКРЕТНО · Только для разработчиков и бета-тестеров</div>
+
+    <div class="admin-section">
+      <h3>👥 ДОБАВИТЬ ПОДПИСЧИКОВ</h3>
+      <div class="admin-row">
+        <input type="number" id="admSubs" placeholder="Например: 100000" min="0">
+        <button id="admAddSubs">Добавить</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h3>💰 ДОБАВИТЬ ДЕНЬГИ</h3>
+      <div class="admin-row">
+        <input type="number" id="admMoney" placeholder="Например: 50000" min="0">
+        <button id="admAddMoney">Добавить</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h3>🎖️ ВЫДАТЬ СКИН</h3>
+      <div class="admin-skins-grid" id="admSkinsGrid"></div>
+    </div>
+
+    <div class="admin-section promo-gen">
+      <h3>🎁 СОЗДАТЬ ПРОМО</h3>
+      <div class="admin-row">
+        <input type="text" id="admPromoCode" placeholder="КОД (латиница)" maxlength="24" style="text-transform:uppercase;">
+        <button class="purple" id="admPromoGen">🎲 Случайный</button>
+      </div>
+      <div style="font-size:12px; color:#cbd5e1; margin:10px 0 4px;">Что выдаёт промокод:</div>
+      <div class="admin-row">
+        <select id="admPromoType1">
+          <option value="">— Ничего —</option>
+          <option value="skin">🎨 Скин</option>
+          <option value="money">💰 Деньги</option>
+          <option value="subs">👥 Подписчики</option>
+          <option value="boost">⚡ Буст</option>
+          <option value="event">🎉 Ивент</option>
+          <option value="admin">👑 Админ-панель</option>
+        </select>
+        <select id="admPromoSkin" style="display:none;"><option value="">— Скин —</option></select>
+        <input type="number" id="admPromoValue" placeholder="Значение" min="0" style="display:none;">
+      </div>
+      <div class="admin-row" style="font-size:12px; color:#cbd5e1; margin-top:6px; align-items:center;">
+        <span style="flex:0 0 auto;">Активаций:</span>
+        <input type="number" id="admPromoUses" value="1" min="1" max="9999" style="max-width:120px;">
+        <span style="flex:0 0 auto; color:#94a3b8;">(0 = ∞)</span>
+      </div>
+      <div class="admin-row" style="margin-top:10px;">
+        <button class="ok wide" id="admPromoCreate">✅ Создать промокод</button>
+      </div>
+      <div style="font-size:12px; color:#a855f7; margin:14px 0 4px; font-weight:800;">📋 СОЗДАННЫЕ ПРОМОКОДЫ</div>
+      <div class="admin-promos-list" id="admPromosList"><div class="admin-promo-empty">Список пуст</div></div>
+    </div>
+
+    <div class="admin-section">
+      <h3>🖼️ ФОН</h3>
+      <div class="admin-bg-grid" id="adminBgGrid">
+        <button data-bg="default">По умолчанию</button>
+        <button data-bg="lava">🌋 Лава</button>
+        <button data-bg="candy">🍬 Кенди</button>
+        <button data-bg="burger">🍔 Бензо Бургер</button>
+        <button data-bg="space">🌌 Космос</button>
+      </div>
+      <div class="admin-row" style="margin-top:8px">
+        <button class="alt" id="admBgCustom">📷 Загрузить свой фон</button>
+        <input type="file" id="admBgFile" accept="image/*" hidden>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h3>📢 СКАЗАТЬ СЛОВО (всем в чате)</h3>
+      <div class="admin-row">
+        <input type="text" id="admSayText" placeholder="Сообщение в чат..." maxlength="120">
+        <button class="ok" id="admSay">Сказать</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h3>🎉 ВКЛЮЧИТЬ ИВЕНТ</h3>
+      <div style="font-size:13px; color:#cbd5e1; margin-bottom:6px">Биом:</div>
+      <div class="admin-row">
+        <select id="admBiome">
+          <option value="lava">🌋 Лава биом — ×2 к деньгам</option>
+          <option value="candy">🍬 Кенди биом — ×4 к деньгам</option>
+          <option value="burger">🍔 Бензо Бургер — ×10 к деньгам</option>
+        </select>
+      </div>
+      <div style="font-size:13px; color:#cbd5e1; margin:10px 0 6px">Длительность:</div>
+      <div class="event-options" id="admDuration">
+        <label><input type="radio" name="dur" value="5" checked>5 минут</label>
+        <label><input type="radio" name="dur" value="10">10 минут</label>
+        <label><input type="radio" name="dur" value="60">1 час</label>
+      </div>
+      <div class="admin-row" style="margin-top:10px">
+        <button class="ok" id="admStartEvent" style="flex:1">🎬 ЗАПУСТИТЬ ИВЕНТ</button>
+        <button id="admStopEvent" style="flex:1">⛔ Остановить</button>
+      </div>
+    </div>
+
+    <button class="admin-close" id="admClose">Закрыть админ-панель</button>
+  </div>
+</div>
+
+<div class="global-banner" id="globalBanner"><span class="tag">📢</span><span id="globalBannerText"></span></div>
+
+<script>
+/* ============================================================
+   СПИСОК АДМИНОВ
+   ============================================================ */
+const ADMINS = [
+  { name: "Boban",  tg: "@Bogan_Boban", tag: "FOUNDER", emoji: "👑", role: "Владелец игры", cls: "founder" },
+  { name: "Точка",  tg: "@miamyr130",   tag: "HELPER",  emoji: "⚫", role: "Хелпер",         cls: "helper"  }
+];
+function renderAdmins() {
+  const list = document.getElementById("adminList");
+  list.innerHTML = "";
+  ADMINS.forEach(a => {
+    const card = document.createElement("div");
+    card.className = "admin-card " + (a.cls || "");
+    card.innerHTML = `
+      <div class="admin-avatar">${a.emoji}</div>
+      <div class="admin-info">
+        <div class="admin-name">
+          <span class="admin-tag">${a.tag}</span>${a.name}
+        </div>
+        <div class="admin-tg">${a.role} · TG: <b>${a.tg}</b></div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+/* ============================================================
+   ЗАЩИЩЁННАЯ ПРОВЕРКА АДМИН-КОДА
+   ============================================================ */
+(function() {
+  const k1 = "Benzo", k2 = "Secret", k3 = "Key2026";
+  const _KEY = k1 + k2 + k3;
+  const e1 = "BB0e", e2 = "FwYb", e3 = "BxoY";
+  const _ENC = e1 + e2 + e3;
+  window.__verifySecret = function(input) {
+    try {
+      if (typeof input !== "string" || input.length !== 10) return false;
+      let decoded = "";
+      for (let i = 0; i < _ENC.length; i++) {
+        decoded += String.fromCharCode(_ENC.charCodeAt(i) ^ _KEY.charCodeAt(i % _KEY.length));
+      }
+      let diff = 0;
+      for (let i = 0; i < decoded.length; i++) diff |= decoded.charCodeAt(i) ^ input.charCodeAt(i);
+      return diff === 0;
+    } catch (e) { return false; }
+  };
+})();
+
+/* ================= Скины ================= */
+function svgAvatar(emoji, bg1, bg2) {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 400'>
+    <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+      <stop offset='0' stop-color='${bg1}'/><stop offset='1' stop-color='${bg2}'/>
+    </linearGradient></defs>
+    <rect width='300' height='400' fill='url(#g)'/>
+    <text x='150' y='260' font-size='220' text-anchor='middle'>${emoji}</text>
+  </svg>`;
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+}
+const SKINS = [
+  { id: 0, name: "Дефолт Бензо",   price: 0,     mult: 1,  avatar: svgAvatar("🎩", "#334155", "#0f172a"), emoji: "🎩" },
+  { id: 1, name: "Саня 49",         price: 1000,  mult: 3,  avatar: svgAvatar("😎", "#3b82f6", "#1e3a8a"), emoji: "😎" },
+  { id: 2, name: "Бензини Жирини",  price: 3500,  mult: 6,  avatar: svgAvatar("👑", "#a855f7", "#4c1d95"), emoji: "👑" },
+  { id: 3, name: "Саня49 и Бензо",  price: 10000, mult: 10, avatar: svgAvatar("🔥", "#ef3340", "#7f1d1d"), emoji: "🔥" },
+  { id: 4, name: "Абаюнда 🤙",       price: -1,    mult: 50, avatar: svgAvatar("🤙", "#f0b429", "#ef3340"), emoji: "🤙", secret: true },
+  { id: 5, name: "Valentine 💘",     price: -1,    mult: 65, avatar: svgAvatar("💘", "#ec4899", "#7f1d1d"), emoji: "💘", secret: true },
+  { id: 6, name: "Саня Фембой 🐱",   price: -1,    mult: 85, avatar: svgAvatar("🐱", "#f0b429", "#7f1d1d"), emoji: "🐱", secret: true },
+  { id: 7, name: "Точка ⚫",          price: -1,    mult: 95, avatar: svgAvatar("⚫", "#0f172a", "#334155"), emoji: "⚫", secret: true }
+];
+const BIOMES = {
+  lava:   { name: "🌋 Лава биом",     mult: 2,  bg: "linear-gradient(135deg,#7f1d1d,#dc2626)" },
+  candy:  { name: "🍬 Кенди биом",    mult: 4,  bg: "linear-gradient(135deg,#db2777,#a855f7)" },
+  burger: { name: "🍔 Бензо Бургер",  mult: 10, bg: "linear-gradient(135deg,#78350f,#f59e0b)" },
+  space:  { name: "🌌 Космос",        mult: 1,  bg: "linear-gradient(135deg,#0f172a,#1e1b4b)" }
+};
+
+/* Батл Пасс */
+const BP_MAX_LEVEL = 150, BP_SUBS_PER_LEVEL = 500;
+function bpRewardForLevel(level) {
+  if (level === 50)  return { type: "skin", skinId: 4, name: "🤙 Абаюнда (×50)" };
+  if (level === 100) return { type: "skin", skinId: 6, name: "🐱 Саня Фембой (×85)" };
+  if (level === 150) return { type: "skin", skinId: 7, name: "⚫ Точка (×95)" };
+  if (level % 25 === 0) return { type: "money", amount: level * 5000, name: "$" + (level * 5000) };
+  if (level % 10 === 0) return { type: "money", amount: level * 1000, name: "$" + (level * 1000) };
+  if (level % 5 === 0)  return { type: "money", amount: level * 200,  name: "$" + (level * 200) };
+  return { type: "subs", amount: level * 100, name: "+" + (level * 100) + " подписчиков" };
+}
+let battlePassLevel = Number(localStorage.getItem("benzoBPLevel") || 1);
+let bpClaimed = JSON.parse(localStorage.getItem("benzoBPClaimed") || "[]");
+
+/* Состояние */
+let subscribers = Number(localStorage.getItem("benzoSubscribers") || 0);
+let money       = Number(localStorage.getItem("benzoMoney") || 0);
+let ownedSkins  = JSON.parse(localStorage.getItem("benzoOwnedSkins") || "[0]");
+let currentSkin = Number(localStorage.getItem("benzoCurrentSkin") || 0);
+let activeEvent = JSON.parse(localStorage.getItem("benzoEvent") || "null");
+let activeBuff  = JSON.parse(localStorage.getItem("benzoBuff") || "null");
+
+const subsEl       = document.getElementById("subs");
+const moneyEl      = document.getElementById("money");
+const bpBadgeEl    = document.getElementById("bpBadge");
+const message      = document.getElementById("message");
+const benzoImg     = document.getElementById("benzoImg");
+const chatBox      = document.getElementById("chatBox");
+
+const nf = n => n.toLocaleString("ru-RU");
+function isAdmin() { return localStorage.getItem("benzoAdmin") === "1"; }
+function save() {
+  localStorage.setItem("benzoSubscribers", subscribers);
+  localStorage.setItem("benzoMoney", money);
+  localStorage.setItem("benzoOwnedSkins", JSON.stringify(ownedSkins));
+  localStorage.setItem("benzoCurrentSkin", currentSkin);
+  localStorage.setItem("benzoBPLevel", battlePassLevel);
+  localStorage.setItem("benzoBPClaimed", JSON.stringify(bpClaimed));
+}
+function skinPhotoKey(id) { return "benzoSkinPhoto_" + id; }
+function applyBackground() {
+  const custom = localStorage.getItem("benzoBg");
+  if (custom) {
+    document.body.style.backgroundImage = `linear-gradient(rgba(17,24,39,.85),rgba(38,50,74,.85)), url('${custom}')`;
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundPosition = "center";
+    return;
+  }
+  const preset = localStorage.getItem("benzoBgPreset") || "default";
+  if (preset !== "default" && BIOMES[preset]) {
+    document.body.style.backgroundImage = "";
+    document.body.style.background = BIOMES[preset].bg;
+  } else {
+    document.body.style.backgroundImage = "";
+    document.body.style.background = "radial-gradient(circle at top,#1e293b,#0a0f1a)";
+  }
+}
+
+/* ЧАТ */
+const NICKNAMES = ["Санек","Владик","Максон","Костян","Тоха","Димон","Леха","Рома","Пашка","Гоша","Ирина","Алина","Маша","Катя","Вика","Данил","Артем","Егор","Богдан","Настя","Кирилл","Максим","Соня","Оля","Тимур"];
+const CHAT_PHRASES = [
+  "вах пон","подписался!","ну ты даёшь","го стрим","красава","бензо топ","как дела?",
+  "скинь скин","это лучший стрим","качаем подписчиков","я первый","какой у тебя скин?",
+  "жёстко","реально круто","с меня подписка","давно смотрю","стрим огонь","лол","ахахах",
+  "база","жиза","хайп","не верю","верю","залетел","топчик","чотко"
+];
+const CHAT_TO_BENZO = [
+  "Бензо, привет!","Бензо, как дела?","Бензо, го скин!","Бензо, ты лучший!",
+  "Бензо, дай промокод!","Бензо, сколько у тебя подписчиков?","Бензо, го ивент!",
+  "Бензо, купи скин!","Бензо, ты видел доску лидеров?","Бензо, когда новый стрим?",
+  "Бензо, за что бан?","Бензо, ты топ!","Бензо, у меня 100к подписчиков!",
+  "Бензо, скинь 1000$!","Бензо, го в спин!","Бензо, включи лаву!",
+  "Бензо, сколько часов стримишь?","Бензо, я тебя обожаю!","Бензо, модератора дай!",
+  "Бензо, а Точка админ?","Бензо, добавь в друзья"
+];
+const BENZO_PHRASES = [
+  "Привет, чат! Донатьте, я на мели","Вах пон! Ещё один подписчик — и я в топе!",
+  "Скиньте промокод, я вам тоже скину","Кто на доске лидеров — тот молодец",
+  "Мой новый скин — просто топ","Всем привет! Начинаем кликать","Чат, кто здесь новый?",
+  "Пишем 'вах пон' в чат!","Набираем подписчиков!","Покажите мне скрин вашего прогресса",
+  "Лайк за старание!","Донат = скин!","Не забывайте подписываться","Сегодня дойдём до 100к!",
+  "Всё, я в топе!","Как вам моя новая аватарка?","Всем спасибо за поддержку!",
+  "Чат, вы лучшие!","Пишите свои промокоды в чат!","Кто хочет админку?"
+];
+const BENZO_REPLIES = {
+  "привет":       ["Привет-привет, чат! 👋", "Хай, брат!", "Салют всем!"],
+  "как дела":     ["Дела топ, подписчиков набираю!", "Как сажа бела, но качаюсь!", "Всё супер, чат!"],
+  "скин":         ["Скины в меню, заходи!", "У меня самый крутой скин!", "Скоро открою новый скин 💘"],
+  "лучший":       ["Спасибо, чат! Вы тоже лучшие!", "Обнял вас всех 🤗", "Стараюсь для вас!"],
+  "промокод":     ["Промокоды в меню 🎁", "Лови промокод в чате!", "Промокод пока что секрет 🤫"],
+  "ивент":        ["Го ивент в админке!", "Сейчас запущу лаву 🌋", "Ивент будет позже!"],
+  "го":           ["Го-го-го!", "Полетели!", "Го, чат!"],
+  "подписчиков":  ["У меня уже много подписчиков!", "Каждый день +1000!", "Скоро 1кк будет!"],
+  "купи":         ["Денег не хватает 😅", "Скоро куплю!", "Донатьте — куплю!"],
+  "доску":        ["Да, я на первом месте!", "Топ 1 — это я!", "Скоро обгоню всех!"],
+  "стрим":        ["Стримлю 24/7!", "Стрим в самом разгаре!", "Скоро новый стрим!"],
+  "бан":          ["Никого не баню!", "Все в игре!", "Бананы только в играх 🍌"],
+  "скинь":        ["Держи 👍", "Скинул!", "Лови!"],
+  "спин":         ["Го спин! 🎰", "Кручу рулетку!", "Спин — топ игра!"],
+  "лаву":         ["Включаю лаву! 🌋", "Лава уже греется!", "Го лава биом!"],
+  "часов":        ["Стримлю уже давно!", "Очень долго!", "Не считаю часы!"],
+  "обожаю":       ["Я тоже тебя обожаю! ❤️", "Спасибо, брат!", "Обнимаю!"],
+  "модератора":   ["Скоро выдам!", "Будь активнее в чате!", "Модерки идут!"],
+  "бензо":        ["Да, это я!", "Бензо на связи!", "Я тут!"],
+  "топ":          ["Спасибо, чат!", "Топ — это мы!", "Обнял!"],
+  "донат":        ["Донат = скин! 💸", "Донатьте, я на мели!", "Любой донат приветствуется!"],
+  "скины":        ["Скины в меню, заходи!", "У меня 8 скинов!", "Скоро открою секретные скины!"],
+  "точка":        ["Точка — мой лучший админ!", "Точка всегда поможет!", "Точка топ!"],
+  "админ":        ["Нажми «Кто админ» — там список!", "Бобан — основатель!", "Точка — хелпер!"],
+  "друзья":       ["Хорошо, пиши ник!", "Скинь свой ник — добавлю!", "Го в друзья! Пиши ник."]
+};
+let lastChatMessageAt = 0, lastChatText = "", benzoReplyCooldown = 0;
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function findReplyKey(text) {
+  const lower = text.toLowerCase();
+  for (const key of Object.keys(BENZO_REPLIES)) { if (lower.includes(key)) return key; }
+  return null;
+}
+function addChatMessage(nick, text, type) {
+  const msg = document.createElement("div");
+  msg.className = "chat-msg" + (type ? " " + type : "");
+  const nickColors = ["#ef3340","#f0b429","#22c55e","#6366f1","#ec4899","#0ea5e9","#a855f7"];
+  const nickColor = nickColors[Math.abs(nick.length * 7) % nickColors.length];
+  if (type === "system") { msg.innerHTML = text; }
+  else { msg.innerHTML = `<span class="nick" style="color:${type === "benzo" ? "#ef3340" : nickColor}">${nick}:</span> <span class="text">${text}</span>`; }
+  chatBox.appendChild(msg);
+  while (chatBox.children.length > 50) chatBox.removeChild(chatBox.firstChild);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+function benzoReplyTo(chatNick, chatText, key) {
+  const replies = BENZO_REPLIES[key];
+  if (!replies) return;
+  const reply = pickRandom(replies);
+  setTimeout(() => { addChatMessage("Бензо", reply, "benzo"); }, 600 + Math.random() * 800);
+}
+function chatSaysSomething() {
+  const nick = pickRandom(NICKNAMES);
+  const toBenzo = Math.random() < 0.45;
+  let text;
+  if (toBenzo) text = pickRandom(CHAT_TO_BENZO);
+  else text = pickRandom(CHAT_PHRASES);
+  addChatMessage(nick, text);
+  lastChatMessageAt = Date.now();
+  lastChatText = text;
+  const key = findReplyKey(text);
+  if (key && Date.now() - benzoReplyCooldown > 2500) {
+    benzoReplyCooldown = Date.now();
+    benzoReplyTo(nick, text, key);
+  }
+}
+function benzoSaysSomething() {
+  if (Date.now() - lastChatMessageAt < 2000) return;
+  const text = pickRandom(BENZO_PHRASES);
+  addChatMessage("Бензо", text, "benzo");
+}
+function benzoSay(text) { addChatMessage("Бензо", text, "benzo"); }
+function systemSay(text) { addChatMessage("", text, "system"); }
+let chatTimer1, chatTimer2, chatTimer3;
+function startChatLoop() {
+  clearInterval(chatTimer1); clearInterval(chatTimer2); clearInterval(chatTimer3);
+  function loop1() { chatSaysSomething(); chatTimer1 = setTimeout(loop1, 2000 + Math.random() * 2000); }
+  loop1();
+  function loop2() { benzoSaysSomething(); chatTimer2 = setTimeout(loop2, 5000 + Math.random() * 4000); }
+  loop2();
+  function loop3() {
+    if (Math.random() < 0.4) {
+      setTimeout(() => chatSaysSomething(), 400);
+      setTimeout(() => chatSaysSomething(), 900);
+    }
+    chatTimer3 = setTimeout(loop3, 6000 + Math.random() * 5000);
+  }
+  loop3();
+}
+
+/* Ивент */
+function loadEvent() {
+  if (activeEvent && activeEvent.endsAt <= Date.now()) { activeEvent = null; localStorage.removeItem("benzoEvent"); }
+  if (activeBuff  && activeBuff.endsAt  <= Date.now()) { activeBuff  = null; localStorage.removeItem("benzoBuff"); }
+  updateEventBanner();
+}
+function getEventMult() { if (activeEvent && activeEvent.endsAt > Date.now()) return activeEvent.mult; return 1; }
+function getBuffMult()  { if (activeBuff  && activeBuff.endsAt  > Date.now()) return activeBuff.mult;  return 1; }
+function startEvent(biomeKey, minutes) {
+  const biome = BIOMES[biomeKey]; if (!biome) return;
+  activeEvent = { biome: biomeKey, name: biome.name, mult: biome.mult, endsAt: Date.now() + minutes * 60 * 1000, totalMs: minutes * 60 * 1000 };
+  localStorage.setItem("benzoEvent", JSON.stringify(activeEvent));
+  updateEventBanner();
+  localStorage.setItem("benzoBgPreset", biomeKey);
+  applyBackground();
+  bc.postMessage({ type: "event", event: activeEvent });
+  systemSay("🎉 Ивент «" + biome.name + "» запущен на " + minutes + " мин! ×" + biome.mult + " к деньгам");
+}
+function startBuff(mult, minutes) {
+  activeBuff = { mult, endsAt: Date.now() + minutes * 60 * 1000 };
+  localStorage.setItem("benzoBuff", JSON.stringify(activeBuff));
+  updateEventBanner();
+}
+function stopEvent() {
+  activeEvent = null; localStorage.removeItem("benzoEvent");
+  localStorage.setItem("benzoBgPreset", "default");
+  applyBackground(); updateEventBanner();
+  bc.postMessage({ type: "event", event: null });
+  systemSay("⛔ Ивент остановлен");
+}
+function updateEventBanner() {
+  const banner = document.getElementById("eventBanner");
+  const eventActive = activeEvent && activeEvent.endsAt > Date.now();
+  const buffActive  = activeBuff  && activeBuff.endsAt  > Date.now();
+  if (eventActive || buffActive) {
+    banner.classList.add("show");
+    let parts = [];
+    if (eventActive) parts.push("🌋 " + activeEvent.name + " (×" + activeEvent.mult + " к деньгам)");
+    if (buffActive)  parts.push("⚡ БАФФ ×" + activeBuff.mult + " (от фембоя)");
+    document.getElementById("eventInfo").textContent = parts.join(" · ");
+    updateEventTime();
+  } else banner.classList.remove("show");
+}
+function updateEventTime() {
+  const now = Date.now();
+  if (activeEvent && activeEvent.endsAt <= now) { activeEvent = null; localStorage.removeItem("benzoEvent"); }
+  if (activeBuff  && activeBuff.endsAt  <= now) { activeBuff  = null; localStorage.removeItem("benzoBuff"); }
+  const eventActive = activeEvent && activeEvent.endsAt > now;
+  const buffActive  = activeBuff  && activeBuff.endsAt  > now;
+  if (!eventActive && !buffActive) { updateEventBanner(); return; }
+  const lefts = [];
+  if (eventActive) lefts.push(activeEvent.endsAt - now);
+  if (buffActive)  lefts.push(activeBuff.endsAt - now);
+  const left = Math.min(...lefts);
+  const totalSec = Math.floor(left / 1000);
+  const h = Math.floor(totalSec / 3600), m = Math.floor((totalSec % 3600) / 60), s = totalSec % 60;
+  const fmt = (n) => String(n).padStart(2, "0");
+  document.getElementById("eventTime").textContent = (h > 0 ? fmt(h) + ":" : "") + fmt(m) + ":" + fmt(s);
+}
+setInterval(updateEventTime, 1000);
+
+/* BroadcastChannel */
+const bc = new BroadcastChannel("benzo_admin");
+function showGlobalBanner(text) {
+  const banner = document.getElementById("globalBanner");
+  document.getElementById("globalBannerText").textContent = text;
+  banner.classList.add("show");
+  clearTimeout(banner._tid);
+  banner._tid = setTimeout(() => banner.classList.remove("show"), 6000);
+}
+bc.onmessage = (e) => {
+  if (e.data.type === "say") { showGlobalBanner(e.data.text); addChatMessage("Бензо", "📢 " + e.data.text, "benzo"); }
+  if (e.data.type === "event") {
+    activeEvent = e.data.event;
+    if (activeEvent) { localStorage.setItem("benzoEvent", JSON.stringify(activeEvent)); localStorage.setItem("benzoBgPreset", activeEvent.biome); }
+    else { localStorage.removeItem("benzoEvent"); localStorage.setItem("benzoBgPreset", "default"); }
+    applyBackground(); updateEventBanner();
+  }
+  if (e.data.type === "sync") {
+    subscribers = Number(localStorage.getItem("benzoSubscribers") || 0);
+    money = Number(localStorage.getItem("benzoMoney") || 0);
+    battlePassLevel = Number(localStorage.getItem("benzoBPLevel") || 1);
+    bpClaimed = JSON.parse(localStorage.getItem("benzoBPClaimed") || "[]");
+    update();
+  }
+  if (e.data.type === "promo_refresh") { if (adminOverlay && adminOverlay.classList.contains("show")) renderAdminPromosList(); }
+  if (e.data.type === "lb_update" && e.data.entry && e.data.entry.id !== getPlayerId()) {
+    const list = loadLeaderboard();
+    const idx = list.findIndex(p => p.id === e.data.entry.id);
+    if (idx >= 0) list[idx] = e.data.entry; else list.push(e.data.entry);
+    list.sort((a, b) => b.subscribers - a.subscribers);
+    saveLeaderboard(list.slice(0, 100));
+    if (leaderboardOverlay.classList.contains("show")) renderLeaderboard();
+  }
+};
+
+/* Промо */
+function loadCustomPromos() { try { return JSON.parse(localStorage.getItem("benzoCustomPromos") || "[]"); } catch (e) { return []; } }
+function saveCustomPromos(list) { localStorage.setItem("benzoCustomPromos", JSON.stringify(list)); }
+function findCustomPromo(code) { return loadCustomPromos().find(p => p.code === code.toUpperCase() && p.active !== false); }
+function useCustomPromo(code) {
+  const list = loadCustomPromos();
+  const idx = list.findIndex(p => p.code === code.toUpperCase());
+  if (idx < 0) return null;
+  const promo = list[idx];
+  if (promo.usesLeft > 0) {
+    promo.usesLeft -= 1;
+    if (promo.usesLeft === 0) promo.active = false;
+    saveCustomPromos(list);
+    bc.postMessage({ type: "promo_refresh" });
+  }
+  return promo;
+}
+
+/* Апдейт */
+function computeBPLevel() { return Math.min(Math.floor(subscribers / BP_SUBS_PER_LEVEL) + 1, BP_MAX_LEVEL); }
+function applySkinVisual() {
+  const skin = SKINS[currentSkin];
+  const customPhoto = localStorage.getItem(skinPhotoKey(currentSkin));
+  benzoImg.src = customPhoto || skin.avatar;
+}
+function update() {
+  subsEl.textContent  = nf(subscribers);
+  moneyEl.textContent = "$" + nf(money);
+  const newLevel = computeBPLevel();
+  if (newLevel > battlePassLevel) battlePassLevel = newLevel;
+  bpBadgeEl.textContent = "Ур. " + battlePassLevel;
+  applySkinVisual();
+  applyBackground();
+  save();
+  if (isAdmin()) document.getElementById("adminBadge").classList.add("show");
+  updateMinigameCards();
+}
+function updateMinigameCards() {
+  const coinCard = document.getElementById("mgCoin");
+  const runCard  = document.getElementById("mgRun");
+  if (subscribers >= 1000) { coinCard.classList.add("unlocked"); document.getElementById("mgCoinCost").textContent = "🔓 Доступно!"; }
+  else { coinCard.classList.remove("unlocked"); document.getElementById("mgCoinCost").textContent = "🔓 Откроется на 1 000 подписчиков"; }
+  if (subscribers >= 10000) { runCard.classList.add("unlocked"); document.getElementById("mgRunCost").textContent = "🔓 Доступно!"; }
+  else { runCard.classList.remove("unlocked"); document.getElementById("mgRunCost").textContent = "🔓 Откроется на 10 000 подписчиков"; }
+}
+
+/* Подписка */
+document.getElementById("subscribeBtn").addEventListener("click", () => {
+  const skinMult  = SKINS[currentSkin].mult;
+  const eventMult = getEventMult();
+  const buffMult  = getBuffMult();
+  subscribers += skinMult;
+  money += 1 * eventMult * buffMult;
+  let msg = "Бензо: «+ " + skinMult + " подписчиков, +$" + (eventMult * buffMult) + "»";
+  if (eventMult > 1) msg += " 🌋 ×" + eventMult;
+  if (buffMult > 1)  msg += " ⚡ ×" + buffMult;
+  message.textContent = msg + " Всего: " + nf(subscribers);
+  benzoSay("+ " + skinMult + " подписчиков! Уже " + nf(subscribers));
+  const newLevel = computeBPLevel();
+  if (newLevel > battlePassLevel) {
+    const diff = newLevel - battlePassLevel;
+    battlePassLevel = newLevel;
+    message.textContent = "🎖️ БАТЛ ПАСС +" + diff + " ур.! Теперь уровень " + battlePassLevel + "!";
+    systemSay("🎖️ Батл Пасс повышен до уровня " + battlePassLevel + "!");
+  }
+  bc.postMessage({ type: "sync" });
+  update();
+});
+
+/* Скины */
+const skinsOverlay = document.getElementById("skinsOverlay");
+const skinGrid     = document.getElementById("skinGrid");
+function renderSkins() {
+  skinGrid.innerHTML = "";
+  SKINS.forEach(skin => {
+    const owned  = ownedSkins.includes(skin.id);
+    const active = currentSkin === skin.id;
+    const customPhoto = localStorage.getItem(skinPhotoKey(skin.id));
+    const card = document.createElement("div");
+    card.className = "skin-card" + (active ? " active" : "");
+    let btnText, btnClass, disabled;
+    if (active) { btnText = "✔ Выбран"; btnClass = "active-btn"; disabled = true; }
+    else if (owned) { btnText = "Надеть"; btnClass = "owned"; disabled = false; }
+    else if (skin.secret) { btnText = "🎁 Только из промо/БП"; btnClass = ""; disabled = true; }
+    else if (money >= skin.price) { btnText = "Купить за $" + nf(skin.price); btnClass = ""; disabled = false; }
+    else { btnText = "💰 $" + nf(skin.price); btnClass = ""; disabled = true; }
+    let priceText = skin.secret ? "🎁 Секретный" : (skin.price === 0 ? "Бесплатно" : "$" + nf(skin.price));
+    if (skin.secret && owned) priceText = "✅ Получен";
+    card.innerHTML = `
+      <div class="skin-avatar">${customPhoto ? `<img src="${customPhoto}" alt="">` : `<span>${skin.emoji || "🎩"}</span>`}</div>
+      <div class="skin-name">${skin.name}</div>
+      <div class="skin-mult">×${skin.mult} к подписчикам</div>
+      <div class="skin-price">${priceText}</div>
+      <button ${disabled ? "disabled" : ""} class="${btnClass}">${btnText}</button>
+    `;
+    card.querySelector("button").addEventListener("click", () => handleSkinClick(skin.id));
+    skinGrid.appendChild(card);
+  });
+}
+function handleSkinClick(id) {
+  const skin = SKINS[id];
+  if (ownedSkins.includes(id)) {
+    currentSkin = id; applySkinVisual(); renderSkins(); update();
+    bc.postMessage({ type: "sync" });
+    benzoSay("Надел скин «" + skin.name + "» ×" + skin.mult + "!");
+    return;
+  }
+  if (skin.secret) { message.textContent = "Бензо: «Этот скин выдаётся из промокодов или Батл Пасса!»"; return; }
+  if (money < skin.price) { message.textContent = "Бензо: «Не хватает денег!»"; return; }
+  money -= skin.price;
+  ownedSkins.push(id);
+  currentSkin = id;
+  applySkinVisual(); update(); renderSkins();
+  bc.postMessage({ type: "sync" });
+  if (skin.mult > 1) showBonusModal(skin);
+  benzoSay("Купил скин «" + skin.name + "» ×" + skin.mult + "!");
+}
+document.getElementById("skinsBtn").addEventListener("click", () => { renderSkins(); skinsOverlay.classList.add("show"); });
+document.getElementById("closeSkins").addEventListener("click", () => skinsOverlay.classList.remove("show"));
+skinsOverlay.addEventListener("click", e => { if (e.target === skinsOverlay) skinsOverlay.classList.remove("show"); });
+
+/* Бонус-модалка */
+const bonusOverlay = document.getElementById("bonusOverlay");
+function showBonusModal(skin) {
+  document.getElementById("bonusSkinName").textContent = skin.name;
+  document.getElementById("bonusMult").textContent = "×" + skin.mult;
+  document.getElementById("bonusTitle").innerHTML = "ВЫ ПОЛУЧАЕТЕ ×" + skin.mult + "<br>К ПОДПИСЧИКАМ";
+  bonusOverlay.classList.add("show");
+}
+document.getElementById("bonusOk").addEventListener("click", () => bonusOverlay.classList.remove("show"));
+
+/* Батл Пасс */
+const bpOverlay = document.getElementById("bpOverlay");
+const bpGrid    = document.getElementById("bpGrid");
+function renderBattlePass() {
+  const newLevel = computeBPLevel();
+  if (newLevel > battlePassLevel) battlePassLevel = newLevel;
+  document.getElementById("bpLevelBig").textContent = "Ур. " + battlePassLevel;
+  bpBadgeEl.textContent = "Ур. " + battlePassLevel;
+  let currentSubs, nextSubs;
+  if (battlePassLevel >= BP_MAX_LEVEL) {
+    currentSubs = BP_MAX_LEVEL * BP_SUBS_PER_LEVEL;
+    nextSubs    = BP_MAX_LEVEL * BP_SUBS_PER_LEVEL;
+    document.getElementById("bpLevelDesc").textContent = "🏆 МАКСИМАЛЬНЫЙ УРОВЕНЬ!";
+  } else {
+    currentSubs = (battlePassLevel - 1) * BP_SUBS_PER_LEVEL;
+    nextSubs    = battlePassLevel * BP_SUBS_PER_LEVEL;
+    document.getElementById("bpLevelDesc").textContent = "До следующего уровня: " + nf(nextSubs - subscribers) + " подписчиков";
+  }
+  const percent = nextSubs === currentSubs ? 100 : Math.max(0, Math.min(100, ((subscribers - currentSubs) / (nextSubs - currentSubs)) * 100));
+  document.getElementById("bpBar").style.width = percent + "%";
+  document.getElementById("bpProgressText").textContent = nf(subscribers) + " / " + nf(nextSubs);
+  bpGrid.innerHTML = "";
+  for (let lvl = 1; lvl <= BP_MAX_LEVEL; lvl++) {
+    const reward = bpRewardForLevel(lvl);
+    const unlocked = battlePassLevel >= lvl;
+    const claimed  = bpClaimed.includes(lvl);
+    const isSecret = lvl === 50 || lvl === 100;
+    const isMega   = lvl === 150;
+    const isCurrent = lvl === battlePassLevel;
+    const tier = document.createElement("div");
+    tier.className = "bp-tier";
+    if (isSecret) tier.classList.add("secret");
+    if (isMega) tier.classList.add("giga");
+    if (unlocked && claimed) tier.classList.add("unlocked");
+    if (isCurrent) tier.classList.add("current");
+    let icon = "🎁";
+    if (reward.type === "skin") { icon = reward.skinId === 4 ? "🤙" : (reward.skinId === 6 ? "🐱" : "⚫"); }
+    else if (reward.type === "money") icon = "💰";
+    else if (reward.type === "subs") icon = "👥";
+    const btnText = claimed ? "✅ Получено" : (unlocked ? "Забрать" : "🔒 Закрыто");
+    const btnClass = claimed ? "claimed-btn" : (unlocked ? "" : "locked-btn");
+    const btnDisabled = claimed || !unlocked;
+    tier.innerHTML = `
+      <span class="bp-tier-num">Ур. ${lvl}</span>
+      <span class="bp-tier-icon">${icon}</span>
+      <div class="bp-tier-name">${reward.name}</div>
+      <div class="bp-tier-subs">${lvl * BP_SUBS_PER_LEVEL} подп.</div>
+      <button ${btnDisabled ? "disabled" : ""} class="${btnClass}">${btnText}</button>
+    `;
+    if (!btnDisabled) tier.querySelector("button").addEventListener("click", () => claimBPReward(lvl));
+    bpGrid.appendChild(tier);
+  }
+}
+function claimBPReward(lvl) {
+  if (bpClaimed.includes(lvl)) return;
+  if (battlePassLevel < lvl) return;
+  const reward = bpRewardForLevel(lvl);
+  if (reward.type === "subs") {
+    subscribers += reward.amount;
+    message.textContent = "🎖️ Батл Пасс ур. " + lvl + ": +" + nf(reward.amount) + " подписчиков!";
+    systemSay("🎖️ Получена награда БП ур. " + lvl + ": +" + nf(reward.amount) + " подписчиков");
+  } else if (reward.type === "money") {
+    money += reward.amount;
+    message.textContent = "🎖️ Батл Пасс ур. " + lvl + ": +$" + nf(reward.amount) + "!";
+    systemSay("🎖️ Получена награда БП ур. " + lvl + ": +$" + nf(reward.amount));
+  } else if (reward.type === "skin") {
+    if (!ownedSkins.includes(reward.skinId)) {
+      ownedSkins.push(reward.skinId);
+      currentSkin = reward.skinId;
+      applySkinVisual();
+      bonusOverlay.classList.add("show");
+      const skin = SKINS[reward.skinId];
+      document.getElementById("bonusSkinName").textContent = skin.name;
+      document.getElementById("bonusMult").textContent = "×" + skin.mult;
+      document.getElementById("bonusTitle").innerHTML = "СЕКРЕТНЫЙ СКИН<br>×" + skin.mult + " К ПОДПИСЧИКАМ!";
+      systemSay("🎉 БАТЛ ПАСС ур. " + lvl + "! Открыт секретный скин «" + skin.name + "» ×" + skin.mult + "!");
+    }
+    message.textContent = "🎖️ Уровень " + lvl + " — получен секретный скин!";
+  }
+  bpClaimed.push(lvl);
+  save();
+  bc.postMessage({ type: "sync" });
+  update();
+  renderBattlePass();
+  renderSkins();
+}
+document.getElementById("bpBtn").addEventListener("click", () => { renderBattlePass(); bpOverlay.classList.add("show"); });
+document.getElementById("closeBP").addEventListener("click", () => bpOverlay.classList.remove("show"));
+bpOverlay.addEventListener("click", e => { if (e.target === bpOverlay) bpOverlay.classList.remove("show"); });
+
+/* Доска лидеров */
+const leaderboardOverlay = document.getElementById("leaderboardOverlay");
+const lbList = document.getElementById("lbList");
+const lbHint = document.getElementById("lbHint");
+let lbMode = "subs";
+const LB_STORAGE_KEY = "benzoLeaderboard";
+function getPlayerId() {
+  let id = localStorage.getItem("benzoPlayerId");
+  if (!id) { id = "player_" + Math.random().toString(36).slice(2, 10) + "_" + Date.now().toString(36); localStorage.setItem("benzoPlayerId", id); }
+  return id;
+}
+function getPlayerName() {
+  let name = localStorage.getItem("benzoPlayerName");
+  if (!name) {
+    const a = ["Крутой","Быстрый","Дикий","Смелый","Хитрый","Грозный","Весёлый","Богатый","Ловкий","Мощный"];
+    const b = ["Бензо","Лис","Волк","Тигр","Орёл","Дракон","Панда","Кот","Лев","Ястреб"];
+    name = a[Math.floor(Math.random() * a.length)] + " " + b[Math.floor(Math.random() * b.length)];
+    localStorage.setItem("benzoPlayerName", name);
+  }
+  return name;
+}
+function loadLeaderboard() { try { return JSON.parse(localStorage.getItem(LB_STORAGE_KEY) || "[]"); } catch (e) { return []; } }
+function saveLeaderboard(list) { localStorage.setItem(LB_STORAGE_KEY, JSON.stringify(list)); }
+function updateLeaderboardEntry() {
+  const list = loadLeaderboard();
+  const myId = getPlayerId();
+  const skin = SKINS[currentSkin];
+  const customPhoto = localStorage.getItem(skinPhotoKey(currentSkin));
+  const entry = {
+    id: myId, name: getPlayerName(), subscribers, money,
+    skinId: currentSkin, skinName: skin.name,
+    skinEmoji: skin.emoji || "🎩",
+    skinPhoto: customPhoto || null,
+    updatedAt: Date.now()
+  };
+  const idx = list.findIndex(p => p.id === myId);
+  if (idx >= 0) list[idx] = entry; else list.push(entry);
+  list.sort((a, b) => b.subscribers - a.subscribers);
+  saveLeaderboard(list.slice(0, 100));
+  bc.postMessage({ type: "lb_update", entry });
+}
+function getFullLeaderboard() {
+  const list = loadLeaderboard();
+  const myId = getPlayerId();
+  const myIdx = list.findIndex(p => p.id === myId);
+  if (myIdx >= 0) {
+    list[myIdx].subscribers = subscribers;
+    list[myIdx].money = money;
+    list[myIdx].skinId = currentSkin;
+    list[myIdx].skinName = SKINS[currentSkin].name;
+    list[myIdx].skinEmoji = SKINS[currentSkin].emoji || "🎩";
+    const cp = localStorage.getItem(skinPhotoKey(currentSkin));
+    list[myIdx].skinPhoto = cp || null;
+    list[myIdx].updatedAt = Date.now();
+  }
+  saveLeaderboard(list);
+  return list;
+}
+function renderLeaderboard() {
+  const list = getFullLeaderboard();
+  const myId = getPlayerId();
+  const sorted = [...list].sort((a, b) => {
+    if (lbMode === "subs") return (b.subscribers || 0) - (a.subscribers || 0);
+    return (b.money || 0) - (a.money || 0);
+  });
+  lbList.innerHTML = "";
+  if (sorted.length === 0) { lbList.innerHTML = `<div style="text-align:center;color:#94a3b8;padding:30px 10px;">Пока никого нет 😢<br>Стань первым!</div>`; return; }
+  const medals = ["🥇","🥈","🥉"];
+  sorted.forEach((p, i) => {
+    const rank = i + 1;
+    const isMe = p.id === myId;
+    const row = document.createElement("div");
+    row.className = "lb-row";
+    if (isMe) row.classList.add("me");
+    if (rank === 1) row.classList.add("top1");
+    else if (rank === 2) row.classList.add("top2");
+    else if (rank === 3) row.classList.add("top3");
+    const rankIcon = rank <= 3 ? medals[rank - 1] : "#" + rank;
+    let avatarHtml = p.skinPhoto ? `<img src="${p.skinPhoto}" alt="">` : (p.skinEmoji || "🎩");
+    const value = lbMode === "subs" ? "👥 " + nf(p.subscribers || 0) : "💰 $" + nf(p.money || 0);
+    row.innerHTML = `
+      <div class="lb-rank">${rankIcon}</div>
+      <div class="lb-avatar">${avatarHtml}</div>
+      <div class="lb-info">
+        <div class="lb-name">${escapeHtml(p.name || "Игрок")}${isMe ? '<span class="you">ЭТО ТЫ</span>' : ""}</div>
+        <div class="lb-skin">${p.skinName || "Дефолт Бензо"}</div>
+      </div>
+      <div class="lb-value ${lbMode === "money" ? "money" : ""}">${value}</div>
+    `;
+    lbList.appendChild(row);
+  });
+  const myIdx = sorted.findIndex(p => p.id === myId);
+  if (myIdx >= 0) lbHint.innerHTML = `📍 Твоё место: <b style="color:#22c55e">#${myIdx + 1}</b> из ${sorted.length}`;
+  else lbHint.innerHTML = `💡 Твоя запись появится здесь после игры!`;
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]); }
+document.getElementById("lbBtn").addEventListener("click", () => {
+  updateLeaderboardEntry();
+  lbMode = "subs";
+  document.getElementById("lbTabSubs").classList.add("active");
+  document.getElementById("lbTabMoney").classList.remove("active");
+  renderLeaderboard();
+  leaderboardOverlay.classList.add("show");
+});
+document.getElementById("closeLB").addEventListener("click", () => leaderboardOverlay.classList.remove("show"));
+leaderboardOverlay.addEventListener("click", e => { if (e.target === leaderboardOverlay) leaderboardOverlay.classList.remove("show"); });
+document.getElementById("lbTabSubs").addEventListener("click", () => {
+  lbMode = "subs";
+  document.getElementById("lbTabSubs").classList.add("active");
+  document.getElementById("lbTabMoney").classList.remove("active");
+  renderLeaderboard();
+});
+document.getElementById("lbTabMoney").addEventListener("click", () => {
+  lbMode = "money";
+  document.getElementById("lbTabMoney").classList.add("active");
+  document.getElementById("lbTabSubs").classList.remove("active");
+  renderLeaderboard();
+});
+
+/* Кто админ */
+const whoAdminOverlay = document.getElementById("whoAdminOverlay");
+document.getElementById("whoAdminBtn").addEventListener("click", () => { renderAdmins(); whoAdminOverlay.classList.add("show"); });
+document.getElementById("closeWhoAdmin").addEventListener("click", () => whoAdminOverlay.classList.remove("show"));
+whoAdminOverlay.addEventListener("click", e => { if (e.target === whoAdminOverlay) whoAdminOverlay.classList.remove("show"); });
+
+/* Промокоды */
+const promoOverlay = document.getElementById("promoOverlay");
+const promoInput   = document.getElementById("promoInput");
+const promoStatus  = document.getElementById("promoStatus");
+document.getElementById("promoBtn").addEventListener("click", () => {
+  promoInput.value = "";
+  promoStatus.innerHTML = "⏳ Введи промокод и получи бонус!";
+  promoStatus.style.color = "#f0b429";
+  promoOverlay.classList.add("show");
+  setTimeout(() => promoInput.focus(), 100);
+});
+document.getElementById("promoClose").addEventListener("click", () => promoOverlay.classList.remove("show"));
+promoOverlay.addEventListener("click", e => { if (e.target === promoOverlay) promoOverlay.classList.remove("show"); });
+let _attempts = 0, _cooldownUntil = 0;
+const VALENTINE_CODE = "VALEN14YINE", VALENTINE_START_MONEY = 6_000_000_000, VALENTINE_SKIN_ID = 5;
+const TOCHKA_CODE = "TO4KAADMIIN", TOCHKA_START_MONEY = 2_000_000_000, TOCHKA_SKIN_ID = 7;
+
+function activateValentine(code) {
+  if (localStorage.getItem("benzoValentineUsed") === "1") { promoStatus.style.color = "#f0b429"; promoStatus.innerHTML = "⚠️ Промокод <b>" + VALENTINE_CODE + "</b> уже активирован!"; return; }
+  localStorage.setItem("benzoAdmin", "1");
+  money += VALENTINE_START_MONEY;
+  if (!ownedSkins.includes(VALENTINE_SKIN_ID)) ownedSkins.push(VALENTINE_SKIN_ID);
+  currentSkin = VALENTINE_SKIN_ID;
+  localStorage.setItem("benzoValentineUsed", "1");
+  applySkinVisual(); save();
+  promoStatus.style.color = "#ec4899";
+  promoStatus.innerHTML = `
+    <div style="text-align:left; background:#1a0d1a; padding:14px; border-radius:14px; border:2px solid #ec4899; margin-top:8px;">
+      <div style="color:#ec4899; font-weight:900; font-size:18px; text-align:center; letter-spacing:2px; margin-bottom:10px;">💘 VALENTINE PROMO 💘</div>
+      <div style="color:#22c55e; font-weight:800; margin-bottom:6px;">✅ Админ-панель активирована</div>
+      <div style="color:#ec4899; font-weight:800; margin-bottom:6px;">✅ Скин: «💘 Valentine» ×65</div>
+      <div style="color:#f0b429; font-weight:800;">✅ +$6 000 000 000 к балансу</div>
+    </div>
+  `;
+  document.getElementById("adminBadge").classList.add("show");
+  systemSay("💘 Valentine-промокод активирован! +$6 000 000 000 и скин 💘 ×65 (без подписчиков)");
+  setTimeout(() => {
+    bonusOverlay.classList.add("show");
+    document.getElementById("bonusSkinName").textContent = "💘 Valentine";
+    document.getElementById("bonusMult").textContent = "×65";
+    document.getElementById("bonusTitle").innerHTML = "ВАЛЕНТИН-СКИН<br>×65 К ПОДПИСЧИКАМ!";
+  }, 800);
+  bc.postMessage({ type: "sync" });
+  update();
+}
+function activateTochka(code) {
+  if (localStorage.getItem("benzoTochkaUsed") === "1") { promoStatus.style.color = "#f0b429"; promoStatus.innerHTML = "⚠️ Промокод <b>" + TOCHKA_CODE + "</b> уже активирован!"; return; }
+  localStorage.setItem("benzoAdmin", "1");
+  money += TOCHKA_START_MONEY;
+  if (!ownedSkins.includes(TOCHKA_SKIN_ID)) ownedSkins.push(TOCHKA_SKIN_ID);
+  currentSkin = TOCHKA_SKIN_ID;
+  localStorage.setItem("benzoTochkaUsed", "1");
+  applySkinVisual(); save();
+  promoStatus.style.color = "#6366f1";
+  promoStatus.innerHTML = `
+    <div style="text-align:left; background:#0d1422; padding:14px; border-radius:14px; border:2px solid #6366f1; margin-top:8px;">
+      <div style="color:#c7d2fe; font-weight:900; font-size:18px; text-align:center; letter-spacing:2px; margin-bottom:10px;">⚫ TOCHKA ADMIN PROMO ⚫</div>
+      <div style="color:#22c55e; font-weight:800; margin-bottom:6px;">✅ Админ-панель активирована</div>
+      <div style="color:#c7d2fe; font-weight:800; margin-bottom:6px;">✅ Скин: «Точка ⚫» ×95</div>
+      <div style="color:#f0b429; font-weight:800;">✅ +$2 000 000 000 к балансу</div>
+    </div>
+  `;
+  document.getElementById("adminBadge").classList.add("show");
+  systemSay("⚫ Промокод TO4KAADMIIN активирован! +$2 000 000 000 и скин ⚫ ×95 (без подписчиков)");
+  setTimeout(() => {
+    bonusOverlay.classList.add("show");
+    document.getElementById("bonusSkinName").textContent = "⚫ Точка";
+    document.getElementById("bonusMult").textContent = "×95";
+    document.getElementById("bonusTitle").innerHTML = "СКИН ТОЧКА<br>×95 К ПОДПИСЧИКАМ!";
+  }, 800);
+  bc.postMessage({ type: "sync" });
+  update();
+}
+function applyCustomPromo(promo, code) {
+  const rewards = [];
+  if (promo.type === "skin" && promo.skinId >= 0) {
+    if (!ownedSkins.includes(promo.skinId)) { ownedSkins.push(promo.skinId); rewards.push("🎨 Скин «" + SKINS[promo.skinId].name + "» ×" + SKINS[promo.skinId].mult); }
+    else rewards.push("🎨 Скин (уже был)");
+  } else if (promo.type === "money" && promo.value > 0) { money += promo.value; rewards.push("💰 +$" + nf(promo.value)); }
+  else if (promo.type === "subs" && promo.value > 0) { subscribers += promo.value; rewards.push("👥 +" + nf(promo.value) + " подписчиков"); }
+  else if (promo.type === "boost" && promo.value > 0) { startBuff(promo.value, 5); rewards.push("⚡ Буст ×" + promo.value + " на 5 минут"); }
+  else if (promo.type === "event" && promo.biome) { startEvent(promo.biome, promo.duration || 5); rewards.push("🎉 Ивент: " + BIOMES[promo.biome].name + " на " + (promo.duration || 5) + " мин"); }
+  else if (promo.type === "admin") { localStorage.setItem("benzoAdmin", "1"); document.getElementById("adminBadge").classList.add("show"); rewards.push("👑 Админ-панель"); }
+  if (rewards.length === 0) { promoStatus.style.color = "#f0b429"; promoStatus.innerHTML = "⚠️ Промокод пустой."; return; }
+  promoStatus.style.color = "#22c55e";
+  promoStatus.innerHTML = "✅ <b>Активировано:</b><br>" + rewards.map(r => "• " + r).join("<br>");
+  systemSay("🎁 Промокод активирован: " + rewards.join(", "));
+  save();
+  bc.postMessage({ type: "sync" });
+  update();
+}
+function activatePromo() {
+  const now = Date.now();
+  if (now < _cooldownUntil) {
+    const left = Math.ceil((_cooldownUntil - now) / 1000);
+    promoStatus.style.color = "#ef3340";
+    promoStatus.textContent = "⏳ Подожди " + left + " сек.";
+    return;
+  }
+  const code = promoInput.value.trim().toUpperCase();
+  if (!code) { promoStatus.style.color = "#ef3340"; promoStatus.textContent = "Введи код!"; return; }
+  if (window.__verifySecret(code)) {
+    localStorage.setItem("benzoAdmin", "1");
+    promoStatus.style.color = "#22c55e";
+    promoStatus.innerHTML = "🔓 <b>АДМИН-ДОСТУП РАЗРЕШЁН</b>";
+    document.getElementById("adminBadge").classList.add("show");
+    _attempts = 0;
+    setTimeout(() => { promoOverlay.classList.remove("show"); openAdminPanel(); }, 900);
+    return;
+  }
+  if (code === VALENTINE_CODE) { activateValentine(code); return; }
+  if (code === TOCHKA_CODE)    { activateTochka(code); return; }
+  const custom = findCustomPromo(code);
+  if (custom) { const used = useCustomPromo(code); if (used) { applyCustomPromo(used, code); return; } }
+  _attempts++;
+  if (_attempts >= 3) { _cooldownUntil = Date.now() + 5000; _attempts = 0; }
+  promoStatus.style.color = "#f0b429";
+  promoStatus.innerHTML = "❌ Промокод «" + code + "» не найден.";
+}
+document.getElementById("promoGo").addEventListener("click", activatePromo);
+promoInput.addEventListener("keydown", e => { if (e.key === "Enter") activatePromo(); });
+
+/* Мини-игры */
+const minigamesOverlay = document.getElementById("minigamesOverlay");
+document.getElementById("minigamesBtn").addEventListener("click", () => { updateMinigameCards(); minigamesOverlay.classList.add("show"); });
+document.getElementById("closeMinigames").addEventListener("click", () => minigamesOverlay.classList.remove("show"));
+minigamesOverlay.addEventListener("click", e => { if (e.target === minigamesOverlay) minigamesOverlay.classList.remove("show"); });
+document.getElementById("mgCoinBtn").addEventListener("click", () => { if (subscribers >= 1000) { minigamesOverlay.classList.remove("show"); startMini(); } });
+document.getElementById("mgRunBtn").addEventListener("click", () => { if (subscribers >= 10000) { minigamesOverlay.classList.remove("show"); startRun(); } });
+document.getElementById("mgSpinBtn").addEventListener("click", () => { minigamesOverlay.classList.remove("show"); startSpinUI(); });
+
+/* Сброс */
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (confirm("Сбросить весь прогресс? Скины, Батл Пасс, промокоды и фон тоже будут удалены.")) {
+    subscribers = 0; money = 0;
+    ownedSkins = [0]; currentSkin = 0;
+    battlePassLevel = 1; bpClaimed = [];
+    SKINS.forEach(s => localStorage.removeItem(skinPhotoKey(s.id)));
+    localStorage.removeItem("benzoBg");
+    localStorage.removeItem("benzoBgPreset");
+    localStorage.removeItem("benzoEvent");
+    localStorage.removeItem("benzoBuff");
+    localStorage.removeItem("benzoValentineUsed");
+    localStorage.removeItem("benzoTochkaUsed");
+    localStorage.removeItem("benzoCustomPromos");
+    activeEvent = null; activeBuff = null;
+    message.textContent = "Бензо: «Начинаем заново!»";
+    systemSay("🔄 Прогресс сброшен!");
+    bc.postMessage({ type: "sync" });
+    update();
+  }
+});
+
+/* Поймай монету */
+const overlay    = document.getElementById("overlay");
+const field      = document.getElementById("field");
+const coinScoreEl= document.getElementById("coinScore");
+const coinTimeEl = document.getElementById("coinTime");
+const miniResult = document.getElementById("miniResult");
+const NEED_COINS = 10, GAME_TIME = 15;
+let coinScore = 0, timeLeft = GAME_TIME, timerId = null, playing = false;
+function spawnCoin() {
+  field.innerHTML = "";
+  const coin = document.createElement("div");
+  coin.className = "coin"; coin.textContent = "🪙";
+  const maxX = field.clientWidth - 62, maxY = field.clientHeight - 62;
+  coin.style.left = Math.max(0, Math.random() * maxX) + "px";
+  coin.style.top  = Math.max(0, Math.random() * maxY) + "px";
+  coin.addEventListener("click", e => {
+    e.stopPropagation();
+    if (!playing) return;
+    coinScore++;
+    coinScoreEl.textContent = coinScore;
+    if (coinScore >= NEED_COINS) { finishMini(true); return; }
+    spawnCoin();
+  });
+  field.appendChild(coin);
+}
+function startMini() {
+  coinScore = 0; timeLeft = GAME_TIME; playing = true;
+  coinScoreEl.textContent = "0"; coinTimeEl.textContent = timeLeft;
+  miniResult.textContent = "";
+  overlay.classList.add("show");
+  setTimeout(spawnCoin, 60);
+  clearInterval(timerId);
+  timerId = setInterval(() => {
+    timeLeft--;
+    coinTimeEl.textContent = timeLeft;
+    if (timeLeft <= 0) finishMini(false);
+  }, 1000);
+}
+function finishMini(win) {
+  playing = false; clearInterval(timerId); field.innerHTML = "";
+  const mult = getEventMult() * getBuffMult();
+  if (win) {
+    const subs = 1300, cash = Math.floor(500 * mult);
+    subscribers += subs; money += cash;
+    miniResult.style.color = "#22c55e";
+    miniResult.textContent = "🏆 Победа! +" + nf(subs) + " и +$" + nf(cash) + (mult > 1 ? " (×" + mult + "!)" : "");
+    systemSay("🪙 Мини-игра «Поймай монету» пройдена! +" + nf(subs) + " подписчиков");
+  } else {
+    miniResult.style.color = "#ef3340";
+    miniResult.textContent = "😢 Время вышло! Поймано: " + coinScore + " из " + NEED_COINS;
+  }
+  bc.postMessage({ type: "sync" });
+  update();
+}
+document.getElementById("closeMini").addEventListener("click", () => { playing = false; clearInterval(timerId); overlay.classList.remove("show"); field.innerHTML = ""; });
+overlay.addEventListener("click", e => { if (e.target === overlay) { playing = false; clearInterval(timerId); overlay.classList.remove("show"); field.innerHTML = ""; } });
+
+/* Беги от фембоя */
+const runOverlay = document.getElementById("runOverlay");
+const runField   = document.getElementById("runField");
+const runPlayer  = document.getElementById("runPlayer");
+const runEnemy   = document.getElementById("runEnemy");
+const runTimeEl  = document.getElementById("runTime");
+const runResult  = document.getElementById("runResult");
+const runCountdown = document.getElementById("runCountdown");
+const cdNum        = document.getElementById("cdNum");
+const runEnemyStatus = document.getElementById("runEnemyStatus");
+const RUN_TIME_SEC = 20, PREP_TIME = 5;
+const PLAYER_SIZE = 60, ENEMY_SIZE = 60, PLAYER_SPEED = 4;
+let runTimeLeft = RUN_TIME_SEC, prepTimeLeft = PREP_TIME;
+let runTimerId = null, enemyTimerId = null, runIntervalId = null, prepTimerId = null;
+let playerPos = { x: 40, y: 40 }, enemyPos = { x: 300, y: 200 };
+let playerKeys = { up: false, down: false, left: false, right: false };
+let runActive = false, runPreparing = false;
+function clampPos(p, size) {
+  p.x = Math.max(0, Math.min(runField.clientWidth - size, p.x));
+  p.y = Math.max(0, Math.min(runField.clientHeight - size, p.y));
+}
+function startRun() {
+  runActive = false; runPreparing = true;
+  runTimeLeft = RUN_TIME_SEC; prepTimeLeft = PREP_TIME;
+  runTimeEl.textContent = runTimeLeft; runResult.textContent = "";
+  playerPos = { x: runField.clientWidth / 2 - 30, y: runField.clientHeight / 2 - 30 };
+  enemyPos  = { x: runField.clientWidth - 100, y: runField.clientHeight / 2 - 30 };
+  playerKeys = { up: false, down: false, left: false, right: false };
+  runEnemy.classList.add("hidden"); runEnemy.classList.remove("spawning");
+  runEnemyStatus.textContent = "👹 Фембой: готовится...";
+  runEnemyStatus.style.color = "#f0b429";
+  drawRunEntities();
+  runOverlay.classList.add("show");
+  runCountdown.classList.remove("hidden");
+  cdNum.textContent = prepTimeLeft;
+  clearInterval(runIntervalId);
+  runIntervalId = setInterval(() => {
+    if (!runActive && !runPreparing) return;
+    let dx = 0, dy = 0;
+    if (playerKeys.left)  dx -= PLAYER_SPEED;
+    if (playerKeys.right) dx += PLAYER_SPEED;
+    if (playerKeys.up)    dy -= PLAYER_SPEED;
+    if (playerKeys.down)  dy += PLAYER_SPEED;
+    playerPos.x += dx; playerPos.y += dy;
+    clampPos(playerPos, PLAYER_SIZE);
+    drawRunEntities();
+  }, 16);
+  clearInterval(prepTimerId);
+  prepTimerId = setInterval(() => {
+    prepTimeLeft--;
+    if (prepTimeLeft > 0) { cdNum.textContent = prepTimeLeft; }
+    else { clearInterval(prepTimerId); endPreparationAndStartChase(); }
+  }, 1000);
+}
+function endPreparationAndStartChase() {
+  runPreparing = false; runActive = true;
+  runCountdown.classList.add("hidden");
+  runEnemy.classList.remove("hidden");
+  runEnemy.classList.add("spawning");
+  setTimeout(() => runEnemy.classList.remove("spawning"), 800);
+  runEnemyStatus.textContent = "👹 Фембой: В ПОГОНЕ!";
+  runEnemyStatus.style.color = "#ef3340";
+  clearInterval(enemyTimerId);
+  enemyTimerId = setInterval(() => {
+    if (!runActive) return;
+    const cx = playerPos.x + PLAYER_SIZE / 2, cy = playerPos.y + PLAYER_SIZE / 2;
+    const ex = enemyPos.x + ENEMY_SIZE / 2, ey = enemyPos.y + ENEMY_SIZE / 2;
+    const dx = cx - ex, dy = cy - ey;
+    const len = Math.hypot(dx, dy) || 1;
+    enemyPos.x += (dx / len) * 4.8;
+    enemyPos.y += (dy / len) * 4.8;
+    clampPos(enemyPos, ENEMY_SIZE);
+    drawRunEntities();
+    if (Math.hypot(playerPos.x - enemyPos.x, playerPos.y - enemyPos.y) < PLAYER_SIZE * 0.7) finishRun(false);
+  }, 60);
+  clearInterval(runTimerId);
+  runTimerId = setInterval(() => {
+    if (!runActive) return;
+    runTimeLeft--;
+    runTimeEl.textContent = runTimeLeft;
+    if (runTimeLeft <= 0) finishRun(true);
+  }, 1000);
+}
+function drawRunEntities() {
+  runPlayer.style.left = playerPos.x + "px"; runPlayer.style.top = playerPos.y + "px";
+  runEnemy.style.left  = enemyPos.x + "px";  runEnemy.style.top  = enemyPos.y + "px";
+}
+function finishRun(win) {
+  runActive = false; runPreparing = false;
+  clearInterval(runTimerId); clearInterval(enemyTimerId); clearInterval(runIntervalId); clearInterval(prepTimerId);
+  runCountdown.classList.add("hidden");
+  if (win) {
+    subscribers += 5000; money += 15000;
+    startBuff(4, 5);
+    runResult.style.color = "#22c55e";
+    runResult.textContent = "🏆 ВЫЖИЛ! +5 000 подписчиков, +$15 000 и БАФФ ×4 на 5 минут!";
+    systemSay("🏃‍♂️ Убежал от фембоя! +5 000 подписчиков, +$15 000, БАФФ ×4 на 5 мин");
+  } else {
+    runResult.style.color = "#ef3340";
+    runResult.textContent = "👹 Фембой тебя поймал!";
+  }
+  bc.postMessage({ type: "sync" });
+  update();
+}
+function stopRunGame() {
+  runActive = false; runPreparing = false;
+  clearInterval(runTimerId); clearInterval(enemyTimerId); clearInterval(runIntervalId); clearInterval(prepTimerId);
+  runCountdown.classList.add("hidden"); runEnemy.classList.add("hidden");
+  runOverlay.classList.remove("show");
+}
+document.getElementById("closeRun").addEventListener("click", stopRunGame);
+runOverlay.addEventListener("click", e => { if (e.target === runOverlay) stopRunGame(); });
+document.querySelectorAll(".run-controls button[data-dir]").forEach(btn => {
+  const dir = btn.dataset.dir;
+  const press = (e) => { e.preventDefault(); playerKeys[dir] = true; };
+  const release = (e) => { e.preventDefault(); playerKeys[dir] = false; };
+  btn.addEventListener("mousedown", press);
+  btn.addEventListener("mouseup", release);
+  btn.addEventListener("mouseleave", release);
+  btn.addEventListener("touchstart", press, { passive: false });
+  btn.addEventListener("touchend", release);
+  btn.addEventListener("touchcancel", release);
+});
+document.addEventListener("keydown", (e) => {
+  if (!runActive && !runPreparing) return;
+  const k = e.key.toLowerCase();
+  if (k === "w" || e.key === "ArrowUp")    playerKeys.up = true;
+  if (k === "s" || e.key === "ArrowDown")  playerKeys.down = true;
+  if (k === "a" || e.key === "ArrowLeft")  playerKeys.left = true;
+  if (k === "d" || e.key === "ArrowRight") playerKeys.right = true;
+});
+document.addEventListener("keyup", (e) => {
+  const k = e.key.toLowerCase();
+  if (k === "w" || e.key === "ArrowUp")    playerKeys.up = false;
+  if (k === "s" || e.key === "ArrowDown")  playerKeys.down = false;
+  if (k === "a" || e.key === "ArrowLeft")  playerKeys.left = false;
+  if (k === "d" || e.key === "ArrowRight") playerKeys.right = false;
+});
+
+/* Спин + Точка помоги */
+const spinOverlay = document.getElementById("spinOverlay");
+const slotEls = [document.getElementById("slot1"), document.getElementById("slot2"), document.getElementById("slot3")];
+const spinBetInput = document.getElementById("spinBet");
+const spinBtn = document.getElementById("spinBtn");
+const spinResultEl = document.getElementById("spinResult");
+const spinTochkaBtn = document.getElementById("spinTochkaBtn");
+const SPIN_SYMBOLS = ["🍒","🍋","🍊","🍇","⭐","💎","7️⃣"];
+let spinning = false;
+let lastBet = 0, lastLostAmount = 0, tochkaUsedThisRound = false;
+
+function startSpinUI() {
+  slotEls.forEach(s => { s.textContent = "❓"; s.className = "slot"; });
+  spinResultEl.textContent = ""; spinResultEl.style.color = "#f0b429";
+  spinTochkaBtn.style.display = "none";
+  tochkaUsedThisRound = false;
+  spinOverlay.classList.add("show");
+}
+function spinRandom() { return SPIN_SYMBOLS[Math.floor(Math.random() * SPIN_SYMBOLS.length)]; }
+function doSpin() {
+  if (spinning) return;
+  const bet = Math.floor(Number(spinBetInput.value));
+  if (!bet || bet < 10) { spinResultEl.style.color = "#ef3340"; spinResultEl.textContent = "Ставка от $10!"; return; }
+  if (bet > money) { spinResultEl.style.color = "#ef3340"; spinResultEl.textContent = "Недостаточно денег!"; return; }
+  spinning = true; spinBtn.disabled = true; spinResultEl.textContent = "Крутим...";
+  spinTochkaBtn.style.display = "none";
+  tochkaUsedThisRound = false;
+  lastBet = bet;
+  const spinInterval = setInterval(() => { slotEls.forEach(s => s.textContent = spinRandom()); }, 70);
+  setTimeout(() => {
+    clearInterval(spinInterval);
+    const results = [spinRandom(), spinRandom(), spinRandom()];
+    slotEls.forEach((s, i) => s.textContent = results[i]);
+    const counts = {};
+    results.forEach(r => counts[r] = (counts[r] || 0) + 1);
+    const maxCount = Math.max(...Object.values(counts));
+    money -= bet;
+    let winAmount = 0, messageTxt = "", cls = "";
+    if (maxCount === 3) { winAmount = bet * 10; money += winAmount; messageTxt = "🎉 ТРИ ОДИНАКОВЫХ! ×10 = $" + nf(winAmount); cls = "win"; }
+    else if (maxCount === 2) { winAmount = bet * 5; money += winAmount; messageTxt = "✨ ДВА ОДИНАКОВЫХ! ×5 = $" + nf(winAmount); cls = "win"; }
+    else {
+      const half = Math.floor(bet * 0.5);
+      money += half;
+      lastLostAmount = bet - half;
+      messageTxt = "😢 Без повторов. Потеряно $" + nf(lastLostAmount) + " (вернули 50%)"; cls = "lose";
+      spinTochkaBtn.style.display = "block";
+    }
+    slotEls.forEach(s => s.classList.add(cls));
+    spinResultEl.style.color = cls === "win" ? "#22c55e" : "#ef3340";
+    spinResultEl.textContent = messageTxt;
+    bc.postMessage({ type: "sync" });
+    update();
+    spinning = false; spinBtn.disabled = false;
+  }, 1800);
+}
+document.getElementById("tochkaHelpBtn").addEventListener("click", () => {
+  if (tochkaUsedThisRound) return;
+  tochkaUsedThisRound = true;
+  spinTochkaBtn.style.display = "none";
+  addChatMessage("Ты", "Бензо, Точка помоги!", "benzo");
+  setTimeout(() => { benzoSay("Так, сейчас позову Точку... ⚫"); }, 500);
+  setTimeout(() => { addChatMessage("Точка", "Я тут! Что случилось?", "benzo"); }, 1600);
+  setTimeout(() => {
+    const success = Math.random() < 0.5;
+    if (success) {
+      money += lastLostAmount;
+      spinResultEl.style.color = "#22c55e";
+      spinResultEl.innerHTML = "⚫ <b>ТОЧКА ПОМОГЛА!</b> Возвращено $" + nf(lastLostAmount) + " (50% удача)";
+      addChatMessage("Точка", "Держи свои $" + nf(lastLostAmount) + "! В следующий раз повезёт 💪", "benzo");
+      systemSay("⚫ Точка помогла вернуть $" + nf(lastLostAmount));
+    } else {
+      spinResultEl.style.color = "#ef3340";
+      spinResultEl.innerHTML = "😢 <b>Точка не смогла помочь.</b> Деньги потеряны.";
+      addChatMessage("Точка", "Извини, брат, ничем не могу помочь... 🥲", "benzo");
+      systemSay("😢 Точка не смогла помочь в спине");
+    }
+    bc.postMessage({ type: "sync" });
+    update();
+  }, 2600);
+});
+spinBtn.addEventListener("click", doSpin);
+document.getElementById("closeSpin").addEventListener("click", () => spinOverlay.classList.remove("show"));
+spinOverlay.addEventListener("click", e => { if (e.target === spinOverlay) spinOverlay.classList.remove("show"); });
+
+/* АДМИН-ПАНЕЛЬ */
+const adminOverlay = document.getElementById("adminOverlay");
+const adminBgGrid  = document.getElementById("adminBgGrid");
+const admSkinsGrid = document.getElementById("admSkinsGrid");
+const admPromosList = document.getElementById("admPromosList");
+function renderAdminSkins() {
+  admSkinsGrid.innerHTML = "";
+  SKINS.forEach(skin => {
+    const have = ownedSkins.includes(skin.id);
+    const item = document.createElement("div");
+    item.className = "admin-skin-item";
+    item.innerHTML = `
+      <span class="as-icon">${skin.emoji || "🎩"}</span>
+      <div class="as-name">${skin.name}</div>
+      <div class="as-mult">×${skin.mult}</div>
+      <button class="${have ? "have" : ""}" ${have ? "disabled" : ""}>${have ? "✅ Есть" : "🎁 Выдать"}</button>
+    `;
+    if (!have) {
+      item.querySelector("button").addEventListener("click", () => {
+        ownedSkins.push(skin.id);
+        save();
+        bc.postMessage({ type: "sync" });
+        update(); renderAdminSkins();
+        message.textContent = "👑 ADMIN: выдан скин «" + skin.name + "»";
+        systemSay("🎁 Админ выдал скин «" + skin.name + "» ×" + skin.mult);
+        if (skin.secret) {
+          bonusOverlay.classList.add("show");
+          document.getElementById("bonusSkinName").textContent = skin.name;
+          document.getElementById("bonusMult").textContent = "×" + skin.mult;
+          document.getElementById("bonusTitle").innerHTML = "СЕКРЕТНЫЙ СКИН<br>×" + skin.mult + " К ПОДПИСЧИКАМ!";
+        }
+      });
+    }
+    admSkinsGrid.appendChild(item);
+  });
+}
+function renderAdminPromosList() {
+  const list = loadCustomPromos();
+  if (list.length === 0) { admPromosList.innerHTML = '<div class="admin-promo-empty">Список пуст</div>'; return; }
+  admPromosList.innerHTML = "";
+  list.forEach((p, i) => {
+    const usesText = p.usesLeft === 0 ? "∞ бесконечно" : (p.usesLeft + " активаций");
+    const usesClass = p.usesLeft === 0 ? "" : "zero";
+    const item = document.createElement("div");
+    item.className = "admin-promo-item";
+    item.innerHTML = `
+      <div class="pi-info">
+        <div class="pi-code">🎁 ${p.code}</div>
+        <div class="pi-desc">${p.description || "Без описания"}</div>
+        <div class="pi-uses ${usesClass}">Использований: ${usesText}</div>
+      </div>
+      <button class="pi-del" data-idx="${i}">🗑</button>
+    `;
+    item.querySelector(".pi-del").addEventListener("click", (e) => {
+      const idx = Number(e.target.dataset.idx);
+      const list2 = loadCustomPromos();
+      list2.splice(idx, 1);
+      saveCustomPromos(list2);
+      renderAdminPromosList();
+      bc.postMessage({ type: "promo_refresh" });
+    });
+    admPromosList.appendChild(item);
+  });
+}
+const admPromoType1 = document.getElementById("admPromoType1");
+const admPromoSkin  = document.getElementById("admPromoSkin");
+const admPromoValue = document.getElementById("admPromoValue");
+function updatePromoFormFields() {
+  const t = admPromoType1.value;
+  admPromoSkin.style.display = "none";
+  admPromoValue.style.display = "none";
+  admPromoValue.value = "";
+  if (t === "skin") {
+    admPromoSkin.style.display = "block";
+    admPromoSkin.innerHTML = '<option value="">— Выбери скин —</option>';
+    SKINS.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.emoji + " " + s.name + " (×" + s.mult + ")";
+      admPromoSkin.appendChild(opt);
+    });
+  } else if (t === "money" || t === "subs" || t === "boost") {
+    admPromoValue.style.display = "block";
+    admPromoValue.placeholder = t === "money" ? "Сумма $" : (t === "subs" ? "Кол-во подписчиков" : "Множитель");
+  }
+}
+admPromoType1.addEventListener("change", updatePromoFormFields);
+document.getElementById("admPromoGen").addEventListener("click", () => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for (let i = 0; i < 12; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  document.getElementById("admPromoCode").value = code;
+});
+document.getElementById("admPromoCreate").addEventListener("click", () => {
+  const code = document.getElementById("admPromoCode").value.trim().toUpperCase();
+  const type = admPromoType1.value;
+  const usesLeft = Number(document.getElementById("admPromoUses").value);
+  const value = Number(admPromoValue.value) || 0;
+  if (!code) { alert("Введи код!"); return; }
+  if (!type) { alert("Выбери, что выдаёт промокод!"); return; }
+  if (code.length < 3) { alert("Код слишком короткий!"); return; }
+  if (code === VALENTINE_CODE || code === TOCHKA_CODE || code === "ADMINWUZAS") { alert("Этот код уже занят!"); return; }
+  const existing = loadCustomPromos();
+  if (existing.find(p => p.code === code)) { alert("Такой промокод уже существует!"); return; }
+  const promo = {
+    code, type, usesLeft: Math.max(0, usesLeft), value,
+    skinId: type === "skin" ? Number(admPromoSkin.value) : -1,
+    biome: type === "event" ? document.getElementById("admBiome").value : null,
+    duration: type === "event" ? Number((document.querySelector('input[name="dur"]:checked') || {}).value || 5) : 5,
+    description: "", createdAt: Date.now()
+  };
+  if (type === "skin") { const s = SKINS[promo.skinId]; promo.description = "🎨 Выдаёт скин «" + s.name + "» ×" + s.mult; }
+  else if (type === "money") promo.description = "💰 +$" + nf(value);
+  else if (type === "subs") promo.description = "👥 +" + nf(value) + " подписчиков";
+  else if (type === "boost") promo.description = "⚡ Буст ×" + value + " на 5 минут";
+  else if (type === "event") promo.description = "🎉 Ивент " + BIOMES[promo.biome].name + " на " + promo.duration + " мин";
+  else if (type === "admin") promo.description = "👑 Выдаёт админ-панель";
+  existing.push(promo);
+  saveCustomPromos(existing);
+  renderAdminPromosList();
+  bc.postMessage({ type: "promo_refresh" });
+  document.getElementById("admPromoCode").value = "";
+  document.getElementById("admPromoUses").value = "1";
+  document.getElementById("admPromoValue").value = "";
+  admPromoType1.value = "";
+  updatePromoFormFields();
+  message.textContent = "👑 ADMIN: создан промокод «" + code + "»";
+  alert("✅ Промокод «" + code + "» создан!\n" + promo.description + "\nАктиваций: " + (promo.usesLeft === 0 ? "∞ бесконечно" : promo.usesLeft));
+});
+function openAdminPanel() {
+  if (!isAdmin()) return;
+  const preset = localStorage.getItem("benzoBgPreset") || "default";
+  adminBgGrid.querySelectorAll("button").forEach(b => { b.classList.toggle("active", b.dataset.bg === preset && !localStorage.getItem("benzoBg")); });
+  renderAdminSkins();
+  renderAdminPromosList();
+  updatePromoFormFields();
+  adminOverlay.classList.add("show");
+}
+document.getElementById("adminBadge").addEventListener("click", openAdminPanel);
+document.getElementById("admClose").addEventListener("click", () => adminOverlay.classList.remove("show"));
+adminOverlay.addEventListener("click", e => { if (e.target === adminOverlay) adminOverlay.classList.remove("show"); });
+document.getElementById("admAddSubs").addEventListener("click", () => {
+  const v = Number(document.getElementById("admSubs").value) || 0;
+  if (v <= 0) return;
+  subscribers += v;
+  document.getElementById("admSubs").value = "";
+  const newLvl = computeBPLevel();
+  if (newLvl > battlePassLevel) battlePassLevel = newLvl;
+  bc.postMessage({ type: "sync" });
+  update();
+  message.textContent = "👑 ADMIN: +" + nf(v) + " подписчиков";
+  systemSay("👑 Админ добавил " + nf(v) + " подписчиков");
+});
+document.getElementById("admAddMoney").addEventListener("click", () => {
+  const v = Number(document.getElementById("admMoney").value) || 0;
+  if (v <= 0) return;
+  money += v;
+  document.getElementById("admMoney").value = "";
+  bc.postMessage({ type: "sync" });
+  update();
+  message.textContent = "👑 ADMIN: +$" + nf(v);
+  systemSay("👑 Админ добавил $" + nf(v));
+});
+adminBgGrid.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-bg]");
+  if (!btn) return;
+  localStorage.removeItem("benzoBg");
+  localStorage.setItem("benzoBgPreset", btn.dataset.bg);
+  adminBgGrid.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  applyBackground();
+  bc.postMessage({ type: "event", event: activeEvent });
+});
+document.getElementById("admBgCustom").addEventListener("click", () => { document.getElementById("admBgFile").click(); });
+document.getElementById("admBgFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    localStorage.setItem("benzoBg", ev.target.result);
+    applyBackground();
+    adminBgGrid.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+  };
+  reader.readAsDataURL(file);
+  e.target.value = "";
+});
+document.getElementById("admSay").addEventListener("click", () => {
+  const text = document.getElementById("admSayText").value.trim();
+  if (!text) return;
+  document.getElementById("admSayText").value = "";
+  showGlobalBanner(text);
+  addChatMessage("Бензо", "📢 " + text, "benzo");
+  bc.postMessage({ type: "say", text });
+});
+document.getElementById("admStartEvent").addEventListener("click", () => {
+  const biome = document.getElementById("admBiome").value;
+  const durRadio = document.querySelector('input[name="dur"]:checked');
+  const minutes = Number(durRadio.value);
+  startEvent(biome, minutes);
+  message.textContent = "👑 ADMIN: ивент «" + BIOMES[biome].name + "» на " + minutes + " мин!";
+});
+document.getElementById("admStopEvent").addEventListener("click", () => {
+  stopEvent();
+  message.textContent = "👑 ADMIN: ивент остановлен";
+});
+
+/* ИНИЦИАЛИЗАЦИЯ */
+loadEvent();
+updateLeaderboardEntry();
+update();
+updatePromoFormFields();
+renderAdmins();
+startChatLoop();
+
+systemSay("🎥 Трансляция Бензо началась! Подписывайся и общайся в чате");
+
+setTimeout(() => { addChatMessage("Бензо", "Всем привет, чат! Сегодня дойдём до 100к подписчиков! 💪", "benzo"); }, 500);
+setTimeout(() => { addChatMessage(pickRandom(NICKNAMES), "Бензо, привет!", "chat"); }, 1500);
+setTimeout(() => { addChatMessage("Бензо", "Хай, брат! 👋 Как настроение?", "benzo"); }, 2600);
+setTimeout(() => { addChatMessage(pickRandom(NICKNAMES), "Бензо, а Точка админ?", "chat"); }, 3800);
+setTimeout(() => { addChatMessage("Бензо", "Да, Точка мой лучший админ! ⚫ Она помогает всем!", "benzo"); }, 5000);
+
+let viewers = 1234;
+setInterval(() => {
+  viewers += Math.floor(Math.random() * 200) - 80;
+  if (viewers < 500) viewers = 800;
+  document.getElementById("viewersCount").textContent = "👁 " + viewers.toLocaleString("ru-RU");
+}, 4000);
+
+let streamSeconds = 0;
+setInterval(() => {
+  streamSeconds++;
+  const h = String(Math.floor(streamSeconds / 3600)).padStart(2, "0");
+  const m = String(Math.floor((streamSeconds % 3600) / 60)).padStart(2, "0");
+  const s = String(streamSeconds % 60).padStart(2, "0");
+  const el = document.getElementById("camStatus");
+  if (el) el.textContent = "● " + h + ":" + m + ":" + s;
+}, 1000);
+
+window.addEventListener("focus", () => {
+  subscribers = Number(localStorage.getItem("benzoSubscribers") || 0);
+  money = Number(localStorage.getItem("benzoMoney") || 0);
+  battlePassLevel = Number(localStorage.getItem("benzoBPLevel") || 1);
+  bpClaimed = JSON.parse(localStorage.getItem("benzoBPClaimed") || "[]");
+  ownedSkins = JSON.parse(localStorage.getItem("benzoOwnedSkins") || "[0]");
+  activeEvent = JSON.parse(localStorage.getItem("benzoEvent") || "null");
+  activeBuff  = JSON.parse(localStorage.getItem("benzoBuff") || "null");
+  update();
+});
+</script>/* ===== ПОДКЛЮЧЕНИЕ К СЕРВЕРУ ===== */
+let ws = null, wsConnected = false, wsTimer = null;
+function connectToServer() {
+  try {
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    ws = new WebSocket(proto + "//" + location.host);
+    ws.onopen = () => {
+      wsConnected = true;
+      ws.send(JSON.stringify({
+        type:"register", playerId: getPlayerId(), name: getPlayerName(),
+        isAdmin: isAdmin(),
+        stats: { subscribers, money,
+          skinName: SKINS[currentSkin].name, skinEmoji: SKINS[currentSkin].emoji,
+          skinPhoto: localStorage.getItem(skinPhotoKey(currentSkin)) || null }
+      }));
+      systemSay("🟢 Подключено к серверу");
+    };
+    ws.onmessage = (ev) => {
+      let d; try { d = JSON.parse(ev.data); } catch(e){ return; }
+      if (d.type === "welcome") {
+        if (d.world.event) { activeEvent = d.world.event; updateEventBanner(); }
+        if (d.world.bgPreset) { localStorage.setItem("benzoBgPreset", d.world.bgPreset); applyBackground(); }
+        if (d.world.bgCustom) { localStorage.setItem("benzoBg", d.world.bgCustom); applyBackground(); }
+        if (d.world.adminMessage) {
+          showGlobalBanner(d.world.adminMessage);
+          addChatMessage("Бензо", "📢 " + d.world.adminMessage, "benzo");
+        }
+      }
+      if (d.type === "admin_say") {
+        showGlobalBanner(d.text);
+        addChatMessage("Бензо", "📢 " + d.text, "benzo");
+      }
+      if (d.type === "event") {
+        activeEvent = d.event;
+        if (activeEvent) { localStorage.setItem("benzoEvent", JSON.stringify(activeEvent)); systemSay("🎉 Ивент «"+activeEvent.name+"» для всех!"); }
+        else { localStorage.removeItem("benzoEvent"); systemSay("⛔ Ивент остановлен"); }
+        updateEventBanner();
+      }
+      if (d.type === "bg") {
+        if (d.custom) localStorage.setItem("benzoBg", d.custom);
+        else { localStorage.removeItem("benzoBg"); localStorage.setItem("benzoBgPreset", d.preset); }
+        applyBackground();
+      }
+      if (d.type === "give_money") {
+        money += d.amount; update();
+        systemSay("💰 "+d.from+" выдал всем $"+nf(d.amount)+"!");
+        benzoSay("ВАУ! Всем выдали $"+nf(d.amount)+"! 🤑");
+      }
+      if (d.type === "give_subs") {
+        subscribers += d.amount; update();
+        systemSay("👥 "+d.from+" выдал всем "+nf(d.amount)+" подписчиков!");
+        benzoSay("Обалдеть! Всем +"+nf(d.amount)+" подписчиков! 🚀");
+      }
+      if (d.type === "leaderboard") {
+        const list = Object.entries(d.list).map(([id,p])=>({
+          id, name:p.name, subscribers:p.subs, money:p.money,
+          skinName:p.skin, skinEmoji:p.emoji, skinPhoto:p.photo, updatedAt:p.updatedAt
+        }));
+        saveLeaderboard(list);
+        if (leaderboardOverlay.classList.contains("show")) renderLeaderboard();
+      }
+      if (d.type === "banned") {
+        alert("⛔ ВЫ ЗАБАНЕНЫ!\nПричина: "+d.reason);
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0d1422;color:#ef3340;font-family:Arial;text-align:center;flex-direction:column;"><div style="font-size:80px;">⛔</div><h1>ВЫ ЗАБАНЕНЫ</h1><p style="color:#f0b429;">Причина: '+d.reason+'</p></div>';
+      }
+      if (d.type === "kicked") { alert("👢 Кикнут: "+d.reason); location.reload(); }
+      if (d.type === "online") {
+        const v = document.getElementById("viewersCount");
+        if (v) v.textContent = "👁 " + d.count + " онлайн";
+      }
+    };
+    ws.onclose = () => { wsConnected = false; clearTimeout(wsTimer); wsTimer = setTimeout(connectToServer, 3000); };
+    ws.onerror = () => {};
+  } catch(e) { console.warn(e); }
+}
+function sendStatsToServer() {
+  if (!ws || ws.readyState !== 1) return;
+  try { ws.send(JSON.stringify({ type:"update", stats: {
+    subscribers, money,
+    skinName: SKINS[currentSkin].name, skinEmoji: SKINS[currentSkin].emoji,
+    skinPhoto: localStorage.getItem(skinPhotoKey(currentSkin)) || null
+  }})); } catch(e){}
+}
+setInterval(sendStatsToServer, 5000);
+connectToServer();
+</body>
+</html>
